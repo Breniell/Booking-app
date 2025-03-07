@@ -1,0 +1,13 @@
+// routes/mtnMomoRoutes.js
+const express = require('express');
+const router = express.Router();
+const mtnMomoController = require('../controllers/mtnMomoController');
+const { authenticate } = require('../middleware/authMiddleware');
+
+// Initialize an MTN MoMo payment
+router.post('/', authenticate, mtnMomoController.initializeMomoPayment);
+
+// Handle notifications from MTN MoMo API
+router.post('/notify', mtnMomoController.handleNotification);
+
+module.exports = router;
