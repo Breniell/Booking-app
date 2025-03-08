@@ -20,11 +20,9 @@ const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
 
 dotenv.config();
-const port = process.env.PORT;
-if (!port) {
-  console.error("❌ PORT n'est pas défini dans les variables d'environnement !");
-  process.exit(1);
-}
+
+// Convertir le port en nombre (Render fournit PORT automatiquement)
+const port = parseInt(process.env.PORT, 10) || 5000;
 console.log(`🔍 Trying to start server on port: ${port}`);
 
 // Déclaration de l'instance Express
@@ -33,7 +31,7 @@ const app = express();
 // Activer les logs détaillés
 app.use(morgan('dev'));
 
-// Middleware CORS (ici, ouvert à tous; adaptez selon vos besoins)
+// Middleware CORS (ici ouvert à tous, à adapter selon vos besoins)
 app.use(cors());
 
 // Middleware de sécurité et limitation des requêtes
@@ -72,8 +70,8 @@ app.use(errorHandler);
 db.sequelize.sync({ force: false })
   .then(() => {
     logger.info('Database synced');
-    // Écoute sur "0.0.0.0" pour que le serveur soit accessible depuis l'extérieur
-    app.listen(port, "0.0.0.0", () => {
+    // Écouter sur l'adresse 0.0.0.0 pour que le service soit accessible publiquement
+    app.listen(port, '0.0.0.0', () => {
       console.log(`✅ Server is running on port ${port}`);
     });
   })
