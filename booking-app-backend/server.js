@@ -69,8 +69,8 @@ app.use(errorHandler);
 db.sequelize.sync({ force: false })
   .then(() => {
     logger.info('Database synced');
-    app.listen(port, () => {
-      // logger.info(`Server is running on port ${port}`);
+    // Modification ici : écoute sur "0.0.0.0" pour que le serveur soit accessible depuis l'extérieur
+    app.listen(port, "0.0.0.0", () => {
       console.log(`✅ Server is running on port ${port}`);
     });
   })
