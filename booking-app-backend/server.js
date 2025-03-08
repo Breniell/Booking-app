@@ -20,8 +20,11 @@ const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
 
 dotenv.config();
-const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT;
+if (!port) {
+  console.error("❌ PORT n'est pas défini dans les variables d'environnement !");
+  process.exit(1);
+}
 console.log(`🔍 Trying to start server on port: ${port}`);
 
 
