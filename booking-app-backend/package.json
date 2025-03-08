@@ -5,6 +5,7 @@
   "scripts": {
     "start": "node server.js",
     "build": "echo \"No build step required\"",
+    "postinstall": "npm rebuild bcrypt",
     "test": "jest"
   },
   "keywords": [],
@@ -33,7 +34,6 @@
     "stripe": "^17.6.0",
     "winston": "^3.17.0"
   },
-  "description": "",
   "devDependencies": {
     "jest": "^29.7.0",
     "sequelize-cli": "^6.6.2",
