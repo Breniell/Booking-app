@@ -62,3 +62,7 @@
 {"level":"info","message":"Server is running on port 5000","service":"booking-app","timestamp":"2025-03-07T06:07:07.087Z"}
 {"level":"info","message":"Database synced","service":"booking-app","timestamp":"2025-03-07T07:08:43.511Z"}
 {"level":"info","message":"Server is running on port 5000","service":"booking-app","timestamp":"2025-03-07T07:08:43.542Z"}
+{"level":"info","message":"Database synced","service":"booking-app","timestamp":"2025-03-07T14:41:56.689Z"}
+{"level":"info","message":"Server is running on port 5000","service":"booking-app","timestamp":"2025-03-07T14:41:56.698Z"}
+{"level":"info","message":"Database synced","service":"booking-app","timestamp":"2025-03-08T09:03:54.040Z"}
+{"level":"info","message":"Server is running on port 5000","service":"booking-app","timestamp":"2025-03-08T09:03:54.109Z"}
