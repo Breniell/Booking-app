@@ -22,7 +22,8 @@ const logger = require('./utils/logger');
 dotenv.config();
 
 // Utiliser PORT depuis l'environnement, sinon fallback sur 5000
-const port = parseInt(process.env.PORT, 10) || 5000;
+const port = process.env.PORT || 5000;
+
 console.log(`🔍 Trying to start server on port: ${port}`);
 
 // Créer l'instance Express
@@ -87,3 +88,12 @@ db.sequelize.sync({ force: false })
     logger.error('Error syncing database:', err);
     process.exit(1);
   });
+  process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+    process.exit(1);
+  });
+  
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  });
+  
