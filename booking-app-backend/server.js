@@ -27,23 +27,23 @@ if (!port) {
 }
 console.log(`🔍 Trying to start server on port: ${port}`);
 
+// Déclaration de l'instance Express
+const app = express();
 
 // Activer les logs détaillés
 app.use(morgan('dev'));
 
-// Middleware
+// Middleware CORS (ici, ouvert à tous; adaptez selon vos besoins)
 app.use(cors());
 
-// app.use(cors({
-//   origin: 'http://localhost:3000', // Adresse du frontend
-//   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-//   allowedHeaders: ['Content-Type', 'Authorization']
-// }));
+// Middleware de sécurité et limitation des requêtes
 app.use(helmet());
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100 // Limite chaque IP à 100 requêtes par fenêtre
 }));
+
+// Parsers pour les requêtes JSON et URL-encodées
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -72,7 +72,7 @@ app.use(errorHandler);
 db.sequelize.sync({ force: false })
   .then(() => {
     logger.info('Database synced');
-    // Modification ici : écoute sur "0.0.0.0" pour que le serveur soit accessible depuis l'extérieur
+    // Écoute sur "0.0.0.0" pour que le serveur soit accessible depuis l'extérieur
     app.listen(port, "0.0.0.0", () => {
       console.log(`✅ Server is running on port ${port}`);
     });
