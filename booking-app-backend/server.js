@@ -27,11 +27,13 @@ const port = process.env.PORT || 3000;
 app.use(morgan('dev'));
 
 // Middleware
-app.use(cors({
-  origin: 'http://localhost:3000', // Adresse du frontend
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(cors());
+
+// app.use(cors({
+//   origin: 'http://localhost:3000', // Adresse du frontend
+//   methods: ['GET', 'POST', 'PUT', 'DELETE'],
+//   allowedHeaders: ['Content-Type', 'Authorization']
+// }));
 app.use(helmet());
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -66,7 +68,8 @@ db.sequelize.sync({ force: false })
   .then(() => {
     logger.info('Database synced');
     app.listen(port, () => {
-      logger.info(`Server is running on port ${port}`);
+      // logger.info(`Server is running on port ${port}`);
+      console.log(`✅ Server is running on port ${port}`);
     });
   })
   .catch((err) => {
