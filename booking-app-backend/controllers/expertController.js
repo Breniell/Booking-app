@@ -90,6 +90,27 @@ exports.getExpertRevenue = async (req, res) => {
 };
 
 
+exports.getExpertServices = async (req, res) => {  
+  try {  
+    const { userId } = req.params;  
+
+    // Assuming you have a Service model and a way to associate services with experts  
+    const expert = await db.Expert.findOne({ where: { userId } });  
+
+    if (!expert) {  
+      return res.status(404).json({ message: 'Expert profile not found' });  
+    }  
+
+    const services = await db.Service.findAll({ where: { expertId: expert.id } });  
+
+    res.status(200).json(services);  
+
+  } catch (error) {  
+    console.error(error);  
+    res.status(500).json({ message: 'Error retrieving expert services', error: error.message });  
+  }  
+}; 
+
 // Delete an expert profile
 exports.deleteExpertProfile = async (req, res) => {
   try {
