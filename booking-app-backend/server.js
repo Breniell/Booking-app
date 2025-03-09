@@ -86,6 +86,7 @@ db.sequelize.sync({ force: false })
   })
   .catch((err) => {
     logger.error('Error syncing database:', err);
+    console.error('❌ Error syncing database:', err); 
     process.exit(1);
   });
   process.on('uncaughtException', (err) => {
