@@ -1,8 +1,0 @@
-# Fichiers à ignorer
-/node_modules
-.env.local
-.env.development
-.env.production
-.DS_Store
-dist/
-build/

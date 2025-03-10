@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://booking-app-backend-2tla.onrender.com',
+  baseURL: 'https://booking-app-backend-2tla.onrender.com/api',
 });
 
 // Request Interceptor
