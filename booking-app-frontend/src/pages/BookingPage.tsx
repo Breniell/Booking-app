@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, CheckCircle, Loader, ArrowLeft, ArrowRight } from 'lucide-react';
 import {
   format,
-  addDays,
   startOfMonth,
   endOfMonth,
   eachDayOfInterval,
@@ -39,7 +38,11 @@ const ProgressIndicator = ({ step }: { step: number }) => (
     <div className="flex items-center gap-4">
       {[1, 2, 3].map(num => (
         <div key={num} className="flex items-center gap-2">
-          <div className={`h-8 w-8 rounded-full flex items-center justify-center ${num <= step ? 'bg-primary text-white' : 'bg-gray-200 text-gray-600'}`}>
+          <div
+            className={`h-8 w-8 rounded-full flex items-center justify-center ${
+              num <= step ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+            }`}
+          >
             {num < step ? <CheckCircle size={18} /> : num}
           </div>
           {num < 3 && <div className="h-px w-8 bg-gray-300" />}
@@ -62,13 +65,13 @@ const ServiceSelection = ({ services, onSelect }: { services: Service[]; onSelec
         key={service.id}
         whileHover={{ scale: 1.03 }}
         onClick={() => onSelect(service)}
-        className="p-6 border rounded-xl cursor-pointer transition-all hover:border-primary hover:shadow-lg"
+        className="p-6 border rounded-xl cursor-pointer transition-all hover:border-blue-600 hover:shadow-lg"
       >
         <h3 className="text-xl font-semibold mb-2 text-gray-800">{service.name}</h3>
         <p className="text-gray-600 mb-4">{service.description}</p>
         <div className="flex items-center justify-between text-sm text-gray-500">
           <span>{service.duration} minutes</span>
-          <span className="text-primary font-medium">{service.price.toLocaleString()} XAF</span>
+          <span className="text-blue-600 font-medium">{service.price.toLocaleString()} XAF</span>
         </div>
       </motion.div>
     ))}
@@ -76,21 +79,37 @@ const ServiceSelection = ({ services, onSelect }: { services: Service[]; onSelec
 );
 
 /** Étape 2 : Sélection de la date et de l'heure via calendrier **/
-const DateTimeSelection = ({ availabilities, selectedDate, onDateChange, onTimeSelect }: { 
+const DateTimeSelection = ({
+  availabilities,
+  selectedDate,
+  onDateChange,
+  onTimeSelect
+}: {
   availabilities: Availability[];
   selectedDate: Date;
   onDateChange: (date: Date) => void;
   onTimeSelect: (time: string) => void;
 }) => {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  // Définir le mois courant dynamiquement
+  const currentMonth = new Date();
   const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 
   const start = startOfMonth(currentMonth);
   const end = endOfMonth(currentMonth);
   const daysInMonth = eachDayOfInterval({ start, end });
 
-  const goToPreviousMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
-  const goToNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
+  const goToPreviousMonth = () => onDateChange(subMonths(selectedDate, 1));
+  const goToNextMonth = () => onDateChange(addMonths(selectedDate, 1));
+
+  // Récupérer les disponibilités pour la date sélectionnée
+  const availabilityForDay = availabilities.find(a =>
+    isSameDay(parseISO(a.date), selectedDate)
+  );
+
+  // Si aucune disponibilité n’est renvoyée, on peut définir un créneau par défaut (optionnel)
+  const defaultSlots = availabilityForDay?.slots.length
+    ? availabilityForDay.slots
+    : ["09:00", "10:00"]; // Par exemple, un créneau par défaut
 
   return (
     <motion.div
@@ -105,7 +124,7 @@ const DateTimeSelection = ({ availabilities, selectedDate, onDateChange, onTimeS
           <ArrowLeft size={18} />
         </button>
         <div className="font-bold text-lg text-gray-800">
-          {format(currentMonth, 'MMMM yyyy', { locale: fr })}
+          {format(selectedDate, 'MMMM yyyy', { locale: fr })}
         </div>
         <button onClick={goToNextMonth} className="p-2 rounded hover:bg-gray-200">
           <ArrowRight size={18} />
@@ -114,22 +133,19 @@ const DateTimeSelection = ({ availabilities, selectedDate, onDateChange, onTimeS
       {/* Calendrier */}
       <div className="grid grid-cols-7 gap-2 mb-4">
         {dayNames.map(day => (
-          <div key={day} className="text-center font-medium text-gray-700">{day}</div>
+          <div key={day} className="text-center font-medium text-gray-700">
+            {day}
+          </div>
         ))}
         {daysInMonth.map((day, idx) => {
           const isoDay = day.toISOString().split('T')[0];
-          const availability = availabilities.find(a => a.date.startsWith(isoDay));
           const isSelected = isSameDay(day, selectedDate);
           return (
             <button
               key={idx}
               onClick={() => onDateChange(day)}
               className={`py-2 rounded text-center transition-colors ${
-                isSelected
-                  ? 'bg-primary text-white'
-                  : availability
-                  ? 'bg-white hover:bg-gray-100 text-gray-800'
-                  : 'bg-gray-200 text-gray-500 opacity-50'
+                isSelected ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
               }`}
             >
               {format(day, 'd')}
@@ -139,30 +155,29 @@ const DateTimeSelection = ({ availabilities, selectedDate, onDateChange, onTimeS
       </div>
       {/* Affichage des créneaux pour la date sélectionnée */}
       <div>
-        {availabilities.find(a => isSameDay(parseISO(a.date), selectedDate))?.slots.length ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {availabilities.find(a => isSameDay(parseISO(a.date), selectedDate))!.slots.map(slot => (
-              <button
-                key={slot}
-                onClick={() => onTimeSelect(slot)}
-                className="p-3 rounded-lg bg-white border hover:border-primary transition-colors min-w-[100px]"
-              >
-                {slot}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center text-gray-500">
-            Aucune disponibilité pour cette date.
-          </div>
-        )}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {defaultSlots.map(slot => (
+            <button
+              key={slot}
+              onClick={() => onTimeSelect(slot)}
+              className="p-3 rounded-lg bg-white border hover:border-blue-600 transition-colors min-w-[100px]"
+            >
+              {slot}
+            </button>
+          ))}
+        </div>
       </div>
     </motion.div>
   );
 };
 
 /** Étape 3 : Confirmation **/
-const ConfirmationStep = ({ service, date, time, onConfirm }: { 
+const ConfirmationStep = ({
+  service,
+  date,
+  time,
+  onConfirm
+}: {
   service: Service;
   date: Date;
   time: string | null;
@@ -174,7 +189,7 @@ const ConfirmationStep = ({ service, date, time, onConfirm }: {
     exit={{ opacity: 0, x: -30 }}
     className="text-center"
   >
-    <CheckCircle className="mx-auto text-primary mb-6" size={48} />
+    <CheckCircle className="mx-auto text-blue-600 mb-6" size={48} />
     <h2 className="text-2xl font-bold mb-4 text-gray-800">Résumé de votre réservation</h2>
     <div className="max-w-md mx-auto space-y-4 mb-8">
       <div className="flex justify-between">
@@ -191,12 +206,12 @@ const ConfirmationStep = ({ service, date, time, onConfirm }: {
       </div>
       <div className="flex justify-between text-lg font-semibold">
         <span>Total :</span>
-        <span className="text-primary font-medium">{service.price.toLocaleString()} XAF</span>
+        <span className="text-blue-600 font-medium">{service.price.toLocaleString()} XAF</span>
       </div>
     </div>
     <button
       onClick={onConfirm}
-      className="w-full max-w-xs mx-auto bg-primary text-white py-4 rounded-xl hover:bg-primary-dark transition-colors"
+      className="w-full max-w-xs mx-auto bg-blue-600 text-white py-4 rounded-xl hover:bg-blue-700 transition-colors"
     >
       Confirmer et Payer
     </button>
@@ -230,11 +245,12 @@ const BookingPage: React.FC = () => {
       setLoading(false);
       return;
     }
+    const currentMonth = format(new Date(), 'yyyy-MM');
     const fetchData = async () => {
       try {
         const [servicesRes, availabilityRes] = await Promise.all([
           api.get(`/services/expert/${expertId}`),
-          api.get(`/availability/${expertId}?month=2025-10`)
+          api.get(`/availability/${expertId}?month=${currentMonth}`)
         ]);
         setServices(servicesRes.data);
         setAvailabilities(
@@ -260,7 +276,7 @@ const BookingPage: React.FC = () => {
         serviceId: selectedService?.id,
         expertId,
         startTime: selectedTime,
-        endTime: selectedTime // À adapter selon votre logique métier
+        endTime: selectedTime // Adaptation possible selon la logique métier
       });
       navigate('/booking-confirmation');
     } catch (err) {
@@ -326,7 +342,7 @@ const BookingPage: React.FC = () => {
               <div className="flex justify-end mt-4">
                 <button
                   onClick={goToNextStep}
-                  className="flex items-center space-x-2 bg-primary text-white px-4 py-2 rounded-lg transition-colors"
+                  className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
                 >
                   <span>Next</span>
                   <ArrowRight size={18} />
@@ -357,7 +373,7 @@ const BookingPage: React.FC = () => {
                 </button>
                 <button
                   onClick={goToNextStep}
-                  className="flex items-center space-x-2 bg-primary text-white px-4 py-2 rounded-lg transition-colors"
+                  className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
                   disabled={!selectedTime}
                 >
                   <span>Next</span>

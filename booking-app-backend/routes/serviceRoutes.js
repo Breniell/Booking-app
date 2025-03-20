@@ -3,9 +3,12 @@ const express = require('express');
 const router = express.Router();
 const serviceController = require('../controllers/serviceController');
 const { authenticate } = require('../middleware/authMiddleware');
+const upload = require('../middleware/upload'); // Chemin vers ton fichier upload.js
+const reviewRoutes = require('./reviewRoutes');
+
 
 // Route pour créer un service (ajoutée)
-router.post('/', authenticate, serviceController.createService);
+router.post('/', authenticate, upload.single('image'), serviceController.createService);
 
 // Route pour récupérer TOUS les services
 router.get('/', authenticate, serviceController.getAllServices);
@@ -21,5 +24,11 @@ router.put('/:id', authenticate, serviceController.updateService);
 
 // Suppression d’un service
 router.delete('/:id', authenticate, serviceController.deleteService);
+
+
+
+router.use('/:id', reviewRoutes);
+
+
 
 module.exports = router;

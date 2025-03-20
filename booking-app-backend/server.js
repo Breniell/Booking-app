@@ -4,6 +4,7 @@ const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
+const path = require('path');
 const db = require('./models'); // Import des modèles en CommonJS
 const userRoutes = require('./routes/userRoutes');
 const availabilityRoutes = require('./routes/availabilityRoutes');
@@ -18,6 +19,7 @@ const orangeMoneyRoutes = require('./routes/orangeMoneyRoutes');
 const mtnMomoRoutes = require('./routes/mtnMomoRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
+const reviewRoutes = require('./routes/reviewRoutes');
 
 // Charger le fichier d'environnement approprié
 dotenv.config({
@@ -35,10 +37,17 @@ const app = express();
 app.use(morgan('dev'));
 
 // Middleware CORS
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3000', // Remplacez par l'URL de votre frontend
+  credentials: true
+}));
 
 // Middleware de sécurité et limitation des requêtes
-app.use(helmet());
+
+app.use(helmet({
+  crossOriginEmbedderPolicy: false,
+  // autres configurations
+}));
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100
@@ -47,6 +56,18 @@ app.use(rateLimit({
 // Parsers pour JSON et URL-encodées
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Servir les fichiers statiques avec des en-têtes CORS
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  setHeaders: function (res, filePath) {
+    res.set('Access-Control-Allow-Origin', 'http://localhost:3000'); // ou votre URL de frontend
+  }
+}));
+app.use('/assets', express.static(path.join(__dirname, 'assets'), {
+  setHeaders: function (res, filePath) {
+    res.set('Access-Control-Allow-Origin', 'http://localhost:3000');
+  }
+}));
 
 // Définition des routes
 app.use('/api/users', userRoutes);
@@ -60,6 +81,7 @@ app.use('/api/calendars', calendarRoutes);
 app.use('/api/availability', availabilityRoutes);
 app.use('/api/video', videoConferenceRoutes);
 app.use('/api/expert-stats', expertStatsRoutes);
+app.use('/api/services', reviewRoutes);
 
 // Route racine
 app.get('/', (req, res) => {

@@ -13,15 +13,19 @@ interface Service {
   description: string;
   duration: number;
   price: number;
+  imageUrl: string;
 }
 
 const HomePage: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
+  // URL de base du backend
+  const backendURL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
 
   useEffect(() => {
     const fetchServices = async () => {
       try {
         const response = await api.get('/services');
+        // On récupère les 3 premiers services
         setServices(response.data.slice(0, 3));
       } catch (error) {
         console.error("Erreur lors de la récupération des services:", error);
@@ -32,7 +36,6 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
-    
       <Hero />
 
       {/* Section À propos */}
@@ -46,10 +49,11 @@ const HomePage: React.FC = () => {
           <h2 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-6">
             À propos de ReservEase
           </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-4">
             ReservEase met en relation des clients et des experts pour simplifier la gestion de vos rendez-vous.
             Notre plateforme vous permet de réserver, gérer et synchroniser vos rendez-vous en toute simplicité.
           </p>
+          
         </div>
       </motion.section>
 
@@ -65,24 +69,39 @@ const HomePage: React.FC = () => {
             Nos Services
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            {services.map((service) => (
-              <motion.div
-                key={service.id}
-                whileHover={{ scale: 1.03 }}
-                className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 transition-shadow"
-              >
-                <h3 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
-                  {service.name}
-                </h3>
-                <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
-                  {service.description}
-                </p>
-                <div className="flex items-center justify-between text-lg text-gray-500">
-                  <span>{service.duration} minutes</span>
-                  <span className="text-primary font-medium">{service.price.toLocaleString()} XAF</span>
-                </div>
-              </motion.div>
-            ))}
+            {services.map((service) => {
+              // Si imageUrl est définie et ne commence pas par "http" ou "/assets",
+              // on préfixe avec l'URL du backend.
+              const imageSrc =
+                service.imageUrl &&
+                !service.imageUrl.startsWith('http') &&
+                !service.imageUrl.startsWith('/assets')
+                  ? `${backendURL}/${service.imageUrl.replace(/^\//, '')}`
+                  : service.imageUrl || '/assets/default-service.jpg';
+
+              return (
+                <motion.div
+                  key={service.id}
+                  whileHover={{ scale: 1.03 }}
+                  className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 transition-shadow"
+                >
+                  <img src={imageSrc} alt={service.name} className="mt-4 rounded-lg shadow-md"  crossOrigin="anonymous"/>
+                  <h3 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
+                    {service.name}
+                  </h3>
+                  <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
+                    {service.description}
+                  </p>
+                  <div className="flex items-center justify-between text-lg text-gray-500">
+                    <span>{service.duration} minutes</span>
+                    <span className="text-primary font-medium">
+                      {service.price.toLocaleString()} XAF
+                    </span>
+                  </div>
+                  
+                </motion.div>
+              );
+            })}
           </div>
           <div className="mt-12 text-center">
             <Link to="/services" className="text-primary hover:underline font-semibold text-xl">
@@ -109,6 +128,7 @@ const HomePage: React.FC = () => {
               <p className="text-lg text-gray-600 dark:text-gray-300">
                 Gérez vos rendez-vous, services et notifications depuis une interface unique.
               </p>
+            
             </div>
             <div className="p-8 border rounded-xl hover:shadow-xl transition-shadow">
               <h3 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
@@ -125,6 +145,7 @@ const HomePage: React.FC = () => {
               <p className="text-lg text-gray-600 dark:text-gray-300">
                 Recevez des rappels automatiques et effectuez vos paiements en toute sécurité.
               </p>
+              
             </div>
           </div>
         </div>
@@ -155,6 +176,7 @@ const HomePage: React.FC = () => {
               <p className="text-2xl text-gray-800 dark:text-gray-100 font-semibold">
                 – Maffo Marie, Expert
               </p>
+              
             </motion.div>
           </div>
         </div>
@@ -178,6 +200,7 @@ const HomePage: React.FC = () => {
               <Link to="/blog" className="text-primary hover:underline font-medium text-xl">
                 Lire l'article
               </Link>
+              
             </div>
             <div className="bg-gray-100 dark:bg-gray-700 rounded-xl p-8 shadow-lg hover:shadow-2xl transition-shadow">
               <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">Conseils de Réservation</h3>
@@ -196,12 +219,11 @@ const HomePage: React.FC = () => {
               <Link to="/blog" className="text-primary hover:underline font-medium text-xl">
                 Lire l'article
               </Link>
+              
             </div>
           </div>
         </div>
       </motion.section>
-
-    
     </div>
   );
 };

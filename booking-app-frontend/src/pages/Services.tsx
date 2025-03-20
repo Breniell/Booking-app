@@ -3,8 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import api from '../lib/api.ts';
-import Navbar from '../components/Navbar.tsx';
-import Footer from '../components/Footer.tsx';
 
 interface Service {
   id: string;
@@ -19,6 +17,9 @@ interface Service {
 const Services: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // URL de base du backend (à définir dans un .env ou utiliser le fallback)
+  const backendURL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -44,7 +45,6 @@ const Services: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-    
       <motion.main 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -55,42 +55,53 @@ const Services: React.FC = () => {
           Nos Services
         </h1>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {services.map((service) => (
-            <motion.div
-              key={service.id}
-              whileHover={{ scale: 1.02 }}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transition-shadow"
-            >
-              <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">
-                {service.name}
-              </h2>
-              <img
-                src={service.imageUrl}
-                alt={service.name}
-                className="w-full max-h-96 object-cover rounded-md mb-6"
-              />
-              <p className="text-gray-600 dark:text-gray-300 mb-4">
-                {service.description}
-              </p>
-              <div className="flex justify-between text-sm text-gray-500">
-                <span>{service.duration} minutes</span>
-                <span className="text-primary font-medium">
-                  {service.price.toLocaleString()} XAF
-                </span>
-              </div>
-              <div className="mt-4 text-center">
-                <Link 
-                  to={`/service/${service.id}`}
-                  className="text-primary hover:underline font-semibold"
-                >
-                  Voir détails →
-                </Link>
-              </div>
-            </motion.div>
-          ))}
+          {services.map((service) => {
+            // Si imageUrl est définie et ne commence pas par "http" (ou "/assets"),
+            // on préfixe avec l'URL du backend.
+            const imageSrc =
+              service.imageUrl &&
+              !service.imageUrl.startsWith('http') &&
+              !service.imageUrl.startsWith('/assets')
+                ? `${backendURL}/${service.imageUrl.replace(/^\//, '')}`
+                : service.imageUrl || '/assets/default-service.jpg';
+
+            return (
+              <motion.div
+                key={service.id}
+                whileHover={{ scale: 1.02 }}
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transition-shadow"
+              >
+                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">
+                  {service.name}
+                </h2>
+                <img
+                  src={imageSrc}
+                  alt={service.name}
+                  className="w-full max-h-96 object-cover rounded-md mb-6"
+                  crossOrigin="anonymous"
+                />
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                  {service.description}
+                </p>
+                <div className="flex justify-between text-sm text-gray-500">
+                  <span>{service.duration} minutes</span>
+                  <span className="text-primary font-medium">
+                    {service.price.toLocaleString()} XAF
+                  </span>
+                </div>
+                <div className="mt-4 text-center">
+                  <Link 
+                    to={`/service/${service.id}`}
+                    className="text-primary hover:underline font-semibold"
+                  >
+                    Voir détails →
+                  </Link>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </motion.main>
-  
     </div>
   );
 };

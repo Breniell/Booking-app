@@ -71,12 +71,6 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, showQuickLinks = false }) 
                   </Link>
                 </li>
                 <li>
-                  <Link to="/messages" className="flex items-center px-4 py-2 hover:bg-gray-100">
-                    <FaEnvelope className="mr-2" />
-                    Messages
-                  </Link>
-                </li>
-                <li>
                   <Link to="/settings" className="flex items-center px-4 py-2 hover:bg-gray-100">
                     <FaCog className="mr-2" />
                     Paramètres

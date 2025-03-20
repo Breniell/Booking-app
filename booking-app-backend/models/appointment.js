@@ -43,6 +43,15 @@ module.exports = (sequelize) => {
     status: {
       type: DataTypes.ENUM('scheduled', 'completed', 'cancelled'),
       defaultValue: 'scheduled'
+    },
+    appointmentType: {
+      type: DataTypes.ENUM('consultation', 'coaching', 'formation'),
+      allowNull: false,
+      defaultValue: 'consultation'
+    },
+    shareableLink: {
+      type: DataTypes.STRING,
+      allowNull: true
     }
   });
 

@@ -27,6 +27,15 @@ const CreateServicePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedImage(e.target.files[0]);
+    }
+  };
+
+
   // Calcul de la durée dès que la date, l'heure de début et l'heure de fin sont renseignées
   useEffect(() => {
     if (currentSlot.date && currentSlot.startTime && currentSlot.endTime) {
@@ -56,33 +65,45 @@ const CreateServicePage: React.FC = () => {
     setAvailabilitySlots(prev => prev.filter((_, i) => i !== index));
   };
 
+
   const handleCreateService = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
     
-    // Vérifier qu'au moins un créneau est renseigné et récupérer sa durée
+    if (!selectedImage) {
+      setError("Veuillez sélectionner une image.");
+      setLoading(false);
+      return;
+    }
+  
     if (availabilitySlots.length === 0) {
       setError("Veuillez ajouter au moins une disponibilité.");
       setLoading(false);
       return;
     }
+  
     const serviceDuration = availabilitySlots[0].duration;
     if (!serviceDuration || serviceDuration <= 0) {
       setError("La durée du service doit être supérieure à 0.");
       setLoading(false);
       return;
     }
-    
+  
     try {
-      await api.post('/services', {
-        name,
-        description,
-        duration: serviceDuration,  // Envoyer la durée calculée
-        price,
-        videoPlatform,
-        imageUrl,
-        availability: availabilitySlots  // Envoi des disponibilités au format attendu
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("description", description);
+      formData.append("duration", String(serviceDuration));
+      formData.append("price", String(price));
+      formData.append("videoPlatform", videoPlatform);
+      // Ajoute l'image
+      formData.append("image", selectedImage);
+      // Convertir et ajouter les disponibilités (par exemple en JSON)
+      formData.append("availability", JSON.stringify(availabilitySlots));
+  
+      await api.post('/services', formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
       navigate('/expert/dashboard');
     } catch (err: any) {
@@ -91,6 +112,7 @@ const CreateServicePage: React.FC = () => {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
@@ -154,15 +176,15 @@ const CreateServicePage: React.FC = () => {
             </div>
           </div>
           <div>
-            <label className="block text-gray-700 mb-2">Image URL</label>
+            <label className="block text-gray-700 mb-2">Uploader une image</label>
             <input
-              type="text"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="Enter image URL"
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary transition"
             />
           </div>
+
           {/* Section Disponibilités intégrée */}
           <div>
             <h2 className="text-xl font-semibold mb-4">Disponibilités</h2>

@@ -1,50 +1,63 @@
 // controllers/serviceController.js
+// controllers/serviceController.js
 const db = require('../models');
+const path = require('path');
 
 exports.createService = async (req, res) => {
   try {
-    const { name, description, duration, price, videoPlatform, imageUrl, availability } = req.body;
+    const { name, description, duration, price, videoPlatform, availability } = req.body;
 
     // Vérifier que l'utilisateur est un expert
     if (req.user.role !== 'expert') {
       return res.status(403).json({ message: 'Unauthorized: Only experts can create services' });
     }
 
-    // Récupérer le profil expert en fonction de l'ID de l'utilisateur connecté
+    // Récupérer le profil expert
     const expert = await db.Expert.findOne({ where: { userId: req.user.id } });
     if (!expert) {
       return res.status(404).json({ message: 'Expert profile not found' });
     }
+
+    // Récupérer le chemin de l'image téléchargée
+    const imagePath = req.file ? path.join('uploads', req.file.filename) : 'assets/default-service.jpg';
 
     // Créer le service
     const service = await db.Service.create({
       expertId: expert.id,
       name,
       description,
-      duration, // La durée peut être calculée côté frontend et envoyée (ou recalculée ici)
+      duration,
       price,
       videoPlatform,
-      imageUrl
+      imageUrl: imagePath  // On stocke le chemin de l'image
     });
 
-    // Si des disponibilités ont été envoyées, créer les enregistrements correspondants
-    if (availability && Array.isArray(availability) && availability.length > 0) {
-      const availabilityData = availability.map(slot => ({
+    // Traitement des disponibilités
+    if (availability) {
+      let availabilityArray;
+      try {
+        availabilityArray = JSON.parse(availability);
+      } catch (err) {
+        return res.status(400).json({ message: 'Invalid availability format', error: err.message });
+      }
+
+      const availabilityData = availabilityArray.map(slot => ({
         expertId: expert.id,
         date: slot.date,
         startTime: slot.startTime,
         endTime: slot.endTime,
-        recurring: false // Vous pouvez adapter si besoin
+        recurring: false
       }));
       await db.Availability.bulkCreate(availabilityData);
     }
 
-    res.status(201).json({ message: 'Service created successfully', service });
+    return res.status(201).json({ message: 'Service created successfully', service });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error creating service', error: error.message });
+    return res.status(500).json({ message: 'Error creating service', error: error.message });
   }
 };
+
 
 //Get all the services 
 
@@ -86,10 +99,10 @@ exports.getServicesByExpert = async (req, res) => {
       services = await db.Service.findAll({ where: { expertId: expert.id } });
     }
     
-    res.status(200).json(services);
+    return res.status(200).json(services);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Erreur serveur' });
+   return res.status(500).json({ message: 'Erreur serveur' });
   }
 };
 
@@ -111,10 +124,18 @@ exports.getService = async (req, res) => {
     if (!service) {
       return res.status(404).json({ message: 'Service not found' });
     }
-    res.status(200).json(service);
+
+     // Si l'image est stockée avec un chemin relatif, construire une URL absolue.
+    if (service.imageUrl && !service.imageUrl.startsWith('http')) {
+      // Remplacer les éventuels backslashes par des slashs pour les URL
+      const normalizedPath = service.imageUrl.replace(/\\/g, '/');
+      service.imageUrl = `${req.protocol}://${req.get('host')}/${normalizedPath}`;
+    }
+    
+    return res.status(200).json(service);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error retrieving service', error: error.message });
+    return res.status(500).json({ message: 'Error retrieving service', error: error.message });
   }
 };
 
@@ -148,10 +169,10 @@ exports.updateService = async (req, res) => {
         service.price = price;
         await service.save();
 
-        res.status(200).json({ message: 'Service updated successfully', service });
+        return res.status(200).json({ message: 'Service updated successfully', service });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Error updating service', error: error.message });
+        return res.status(500).json({ message: 'Error updating service', error: error.message });
     }
 };
 
@@ -159,6 +180,10 @@ exports.updateService = async (req, res) => {
 exports.deleteService = async (req, res) => {
     try {
         const { id } = req.params;
+
+        if (!req.user) {
+          return res.status(401).json({ message: 'Authentication required' });
+        }
 
         const service = await db.Service.findByPk(id);
 
@@ -179,9 +204,9 @@ exports.deleteService = async (req, res) => {
 
         await service.destroy();
 
-        res.status(200).json({ message: 'Service deleted successfully' });
+        return res.status(200).json({ message: 'Service deleted successfully' });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Error deleting service', error: error.message });
+        return res.status(500).json({ message: 'Error deleting service', error: error.message });
     }
 };

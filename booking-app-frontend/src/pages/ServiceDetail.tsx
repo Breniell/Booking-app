@@ -1,3 +1,4 @@
+// src/pages/ServiceDetail.tsx
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -15,6 +16,10 @@ interface ServiceData {
   price: number;
   videoPlatform?: string;
   imageUrl: string;
+  Expert?: {
+    firstName: string;
+    lastName: string;
+  };
 }
 
 const ServiceDetail: React.FC = () => {
@@ -27,7 +32,6 @@ const ServiceDetail: React.FC = () => {
       try {
         const response = await api.get(`/services/${id}`);
         setService(response.data);
-        console.log(service);
       } catch (error) {
         console.error('Erreur lors de la récupération du service:', error);
       } finally {
@@ -45,9 +49,21 @@ const ServiceDetail: React.FC = () => {
     );
   }
 
+// Définir l'URL de base du backend
+const backendURL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+
+const imageSrc =
+  service && service.imageUrl
+    ? service.imageUrl.startsWith('http')
+      ? service.imageUrl
+      : `${backendURL}/${service.imageUrl.replace(/^\//, '')}`
+    : '/assets/default-service.jpg';
+
+console.log('Image Source:', imageSrc);
+
+
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-    
       <motion.main
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -55,47 +71,97 @@ const ServiceDetail: React.FC = () => {
         className="container mx-auto px-4 py-12"
       >
         {service ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
-            <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-4">
-              {service.name}
-            </h1>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="flex items-center justify-center">
             <img
-              src={service.imageUrl}
+              src={imageSrc}
               alt={service.name}
-              className="w-full max-h-96 object-cover rounded-md mb-6"
+              className="w-full h-96 object-cover rounded-lg shadow-lg"
+              crossOrigin="anonymous"
             />
-            <p className="text-gray-600 dark:text-gray-300 mb-6">{service.description}</p>
-            <div className="flex justify-between items-center text-lg font-medium text-gray-800 dark:text-gray-100 mb-6">
-              <span>Durée: {service.duration} minutes</span>
-              <span className="text-yellow-800 bg-yellow-200 p-2 border-yellow-600 font-semibold italic">
-                Prix: {service.price.toLocaleString()} XAF
-              </span>
 
             </div>
-            {service.videoPlatform && (
-              <div className="mb-6">
-                <p className="text-gray-600 dark:text-gray-300">
-                  Plateforme Vidéo: <span className="font-semibold">{service.videoPlatform}</span>
+            <div className="flex flex-col justify-between">
+              <div>
+                <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-4">
+                  {service.name}
+                </h1>
+                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                  {service.description}
                 </p>
+                <div className="flex justify-between items-center text-lg font-medium mb-6">
+                  <span>Durée : {service.duration} minutes</span>
+                  <span className="bg-yellow-200 text-yellow-800 p-2 border border-yellow-600 font-semibold italic">
+                    {service.price.toLocaleString()} XAF
+                  </span>
+                </div>
+                {service.videoPlatform && (
+                  <p className="text-gray-600 dark:text-gray-300 mb-4">
+                    Plateforme Vidéo : <span className="font-semibold">{service.videoPlatform}</span>
+                  </p>
+                )}
+                {service.Expert ? (
+                  <p className="text-gray-600 dark:text-gray-300 mb-4">
+                    Expert : <span className="font-semibold">{service.Expert.firstName} {service.Expert.lastName}</span>
+                  </p>
+                ) : (
+                  <p className="text-gray-600 dark:text-gray-300 mb-4">
+                    Expert : Non renseigné
+                  </p>
+                )}
               </div>
-            )}
-            {service.Expert && (
-              <p className="text-gray-600 dark:text-gray-300 mb-4">
-                Expert: <span className="font-semibold">{service.Expert.firstName} {service.Expert.lastName}</span>
-              </p>
-            )}
-            <Link 
-              to={`/book?expertId=${service.expertId}&serviceId=${service.id}`}
-              className="inline-block bg-secondary hover:bg-secondary-dark text-white px-8 py-4 rounded-full text-xl font-semibold transition-colors"
-            >
-              Réserver ce service
-            </Link>
-
+              <Link
+                to={`/book?expertId=${service.expertId}&serviceId=${service.id}`}
+                className="mt-4 inline-block bg-secondary hover:bg-secondary-dark text-white px-8 py-4 rounded-full text-xl font-semibold transition-colors"
+              >
+                Réserver ce service
+              </Link>
+            </div>
           </div>
         ) : (
           <p className="text-center text-gray-600 dark:text-gray-300">Service non trouvé.</p>
         )}
-        {service && <ReviewSection serviceId={service.id} />}
+
+        {/* Section Avis et Commentaires */}
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <h2 className="text-2xl font-bold mb-4">Avis des clients</h2>
+            {/* Exemples d'avis statiques */}
+            <div className="space-y-4">
+              <div className="p-4 bg-white rounded-lg shadow">
+                <div className="flex items-center mb-2">
+                  {/* <img
+                    src="https://via.placeholder.com/50"
+                    alt="User Avatar"
+                    className="w-12 h-12 rounded-full mr-4"
+                  /> */}
+                  <div>
+                    <p className="font-bold text-gray-800">John Doe</p>
+                    <p className="text-sm text-gray-600">15 mars 2025</p>
+                  </div>
+                </div>
+                <p className="text-gray-700">Service exceptionnel ! Je recommande vivement.</p>
+              </div>
+              <div className="p-4 bg-white rounded-lg shadow">
+                <div className="flex items-center mb-2">
+                  {/* <img
+                    src="https://via.placeholder.com/50"
+                    alt="User Avatar"
+                    className="w-12 h-12 rounded-full mr-4"
+                  /> */}
+                  <div>
+                    <p className="font-bold text-gray-800">Jane Smith</p>
+                    <p className="text-sm text-gray-600">12 mars 2025</p>
+                  </div>
+                </div>
+                <p className="text-gray-700">Le service était très professionnel et rapide.</p>
+              </div>
+            </div>
+          </div>
+          <div>
+            <ReviewSection serviceId={service?.id as number} />
+          </div>
+        </div>
       </motion.main>
     </div>
   );

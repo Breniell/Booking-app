@@ -42,7 +42,7 @@ exports.register = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error creating user', error: error.message });
+    return res.status(500).json({ message: 'Error creating user', error: error.message });
   }  
 };
 
@@ -67,7 +67,7 @@ exports.login = async (req, res) => {
     // Generate a JWT token
     const token = generateToken(user);
 
-    res.status(200).json({ 
+    return res.status(200).json({ 
       message: 'Logged in successfully', 
       token,
       user: {
@@ -88,10 +88,10 @@ exports.login = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await db.User.findAll();
-    res.status(200).json(users);
+    return res.status(200).json(users);
   } catch (error) {
     console.error(error);
-    res.status(500).json({message: 'Error retrieving users', error: error.message});
+    return res.status(500).json({message: 'Error retrieving users', error: error.message});
   }
 };
 
