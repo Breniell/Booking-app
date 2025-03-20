@@ -37,7 +37,10 @@ const app = express();
 app.use(morgan('dev'));
 
 // Middleware CORS
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://booking-app-kappa-nine.vercel.app'], // Autorisez les deux origines
+  credentials: true
+}));
 
 // Middleware de sécurité et limitation des requêtes
 
@@ -57,12 +60,15 @@ app.use(express.urlencoded({ extended: true }));
 // Servir les fichiers statiques avec des en-têtes CORS
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   setHeaders: function (res, filePath) {
-    res.set('Access-Control-Allow-Origin', 'http://localhost:3000'); // ou votre URL de frontend
+    res.set('Access-Control-Allow-Origin', 'http://localhost:3000');
+    res.set('Access-Control-Allow-Origin', 'https://booking-app-kappa-nine.vercel.app'); // Autorisez cette origine également
   }
 }));
+
 app.use('/assets', express.static(path.join(__dirname, 'assets'), {
   setHeaders: function (res, filePath) {
     res.set('Access-Control-Allow-Origin', 'http://localhost:3000');
+    res.set('Access-Control-Allow-Origin', 'https://booking-app-kappa-nine.vercel.app'); // Autorisez cette origine également
   }
 }));
 
