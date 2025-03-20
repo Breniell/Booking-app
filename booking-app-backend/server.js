@@ -37,10 +37,7 @@ const app = express();
 app.use(morgan('dev'));
 
 // Middleware CORS
-app.use(cors({
-  origin: 'http://localhost:3000', // Remplacez par l'URL de votre frontend
-  credentials: true
-}));
+app.use(cors());
 
 // Middleware de sécurité et limitation des requêtes
 
