@@ -95,9 +95,9 @@ app.get('/', (req, res) => {
 app.use(errorHandler);
 
 // Synchronisation de la base de données et démarrage du serveur
-db.sequelize.sync({ force: false })
+db.sequelize.sync({ alter: true })
   .then(() => {
-    logger.info('Database synced');
+    logger.info('Database synced with alter');
     const server = app.listen(port, '0.0.0.0', () => {
       console.log(`✅ Server is running on port ${port}`);
     });
@@ -111,6 +111,7 @@ db.sequelize.sync({ force: false })
     console.error('❌ Error syncing database:', err);
     process.exit(1);
   });
+
 
 // Gestion des erreurs globales
 process.on('uncaughtException', (err) => {
