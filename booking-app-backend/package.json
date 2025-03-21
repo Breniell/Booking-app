@@ -2,12 +2,12 @@
   "name": "booking-app-backend",
   "version": "1.0.0",
   "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "build": "echo \"No build step required\"",
-    "test": "jest",
-    "postinstall": "npx sequelize-cli db:migrate"
-  },
+"scripts": {
+  "start": "node server.js",
+  "build": "echo \"No build step required\"",
+  "test": "jest",
+  "postinstall": "chmod +x ./node_modules/.bin/sequelize && npx sequelize-cli db:migrate"
+},
   "engines": {
     "node": "22.x"
   },
