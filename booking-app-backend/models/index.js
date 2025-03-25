@@ -25,19 +25,21 @@ db.Appointment = require('./appointment')(sequelize, Sequelize);
 db.Availability = require('./availability')(sequelize, Sequelize);
 db.Review = require('./review')(sequelize, Sequelize);
 
-// Associations
+// Association entre User et Expert
 db.User.hasOne(db.Expert, {
   foreignKey: 'userId',
   onDelete: 'CASCADE'
 });
-db.Expert.belongsTo(db.User, { foreignKey: 'userId', as: 'User' }); // Alias ajouté
+db.Expert.belongsTo(db.User, { foreignKey: 'userId', as: 'User' });
 
+// Association entre Expert et Service
 db.Expert.hasMany(db.Service, {
   foreignKey: 'expertId',
   onDelete: 'CASCADE'
 });
 db.Service.belongsTo(db.Expert, { foreignKey: 'expertId' });
 
+// Association entre Appointment et User (Client)
 db.User.hasMany(db.Appointment, {
   foreignKey: 'clientId',
   as: 'ClientAppointments',
@@ -45,6 +47,7 @@ db.User.hasMany(db.Appointment, {
 });
 db.Appointment.belongsTo(db.User, { foreignKey: 'clientId', as: 'Client' });
 
+// Association entre Appointment et User (Expert)
 db.User.hasMany(db.Appointment, {
   foreignKey: 'expertId',
   as: 'ExpertAppointments',
@@ -52,16 +55,23 @@ db.User.hasMany(db.Appointment, {
 });
 db.Appointment.belongsTo(db.User, { foreignKey: 'expertId', as: 'Expert' });
 
+// Associer le modèle Service aux Appointments avec l'alias "appointments"
 db.Service.hasMany(db.Appointment, {
   foreignKey: 'serviceId',
-  onDelete: 'CASCADE'
+  onDelete: 'CASCADE',
+  as: 'appointments'
 });
-db.Appointment.belongsTo(db.Service, { foreignKey: 'serviceId' });
 
+// Définir l'appartenance d'Appointment au Service via l'alias "service"
+db.Appointment.belongsTo(db.Service, {
+  foreignKey: 'serviceId',
+  as: 'service'
+});
+
+// Autres associations (Availability, Review, etc.)
 db.Expert.hasMany(db.Availability, { foreignKey: 'expertId', onDelete: 'CASCADE' });
 db.Availability.belongsTo(db.Expert, { foreignKey: 'expertId' });
 
-// Associations pour Review
 db.Service.hasMany(db.Review, { foreignKey: 'serviceId', onDelete: 'CASCADE' });
 db.Review.belongsTo(db.Service, { foreignKey: 'serviceId' });
 db.User.hasMany(db.Review, { foreignKey: 'userId', onDelete: 'CASCADE' });

@@ -1,4 +1,5 @@
 // config/config.js
+// require('./validateEnv'); // Vérifie que toutes les variables essentielles sont présentes
 require('dotenv').config({
   path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
 });

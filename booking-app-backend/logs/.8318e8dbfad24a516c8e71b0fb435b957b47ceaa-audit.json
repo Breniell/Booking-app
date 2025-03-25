@@ -1,0 +1,20 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "logs\\.8318e8dbfad24a516c8e71b0fb435b957b47ceaa-audit.json",
+    "files": [
+        {
+            "date": 1742794594770,
+            "name": "logs\\booking-app-2025-03-24.log",
+            "hash": "78b8d18c5866d8ba4f8de145a4acf27dc61c6f0dcff8df9af4a179c67cc629ee"
+        },
+        {
+            "date": 1742880909344,
+            "name": "logs\\booking-app-2025-03-25.log",
+            "hash": "465e01219d4f54d6eb4cb030cc135a3e7f2d223338eaf1b596fe7378f95c7a2f"
+        }
+    ],
+    "hashType": "sha256"
+}

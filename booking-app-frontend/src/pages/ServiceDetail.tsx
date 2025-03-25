@@ -6,7 +6,7 @@ import api from '../lib/api.ts';
 import Navbar from '../components/Navbar.tsx';
 import Footer from '../components/Footer.tsx';
 import ReviewSection from '../components/ReviewSection.tsx';
-
+import { useAuthStore } from '../lib/store.ts';
 interface ServiceData {
   id: number;
   expertId: number;
@@ -26,6 +26,7 @@ const ServiceDetail: React.FC = () => {
   const { id } = useParams();
   const [service, setService] = useState<ServiceData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuthStore();
 
   useEffect(() => {
     const fetchService = async () => {
@@ -123,44 +124,8 @@ console.log('Image Source:', imageSrc);
         )}
 
         {/* Section Avis et Commentaires */}
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Avis des clients</h2>
-            {/* Exemples d'avis statiques */}
-            <div className="space-y-4">
-              <div className="p-4 bg-white rounded-lg shadow">
-                <div className="flex items-center mb-2">
-                  {/* <img
-                    src="https://via.placeholder.com/50"
-                    alt="User Avatar"
-                    className="w-12 h-12 rounded-full mr-4"
-                  /> */}
-                  <div>
-                    <p className="font-bold text-gray-800">John Doe</p>
-                    <p className="text-sm text-gray-600">15 mars 2025</p>
-                  </div>
-                </div>
-                <p className="text-gray-700">Service exceptionnel ! Je recommande vivement.</p>
-              </div>
-              <div className="p-4 bg-white rounded-lg shadow">
-                <div className="flex items-center mb-2">
-                  {/* <img
-                    src="https://via.placeholder.com/50"
-                    alt="User Avatar"
-                    className="w-12 h-12 rounded-full mr-4"
-                  /> */}
-                  <div>
-                    <p className="font-bold text-gray-800">Jane Smith</p>
-                    <p className="text-sm text-gray-600">12 mars 2025</p>
-                  </div>
-                </div>
-                <p className="text-gray-700">Le service était très professionnel et rapide.</p>
-              </div>
-            </div>
-          </div>
-          <div>
-            <ReviewSection serviceId={service?.id as number} />
-          </div>
+        <div className="mt-12">
+            <ReviewSection serviceId={service?.id as number} currentUser={user}/>
         </div>
       </motion.main>
     </div>

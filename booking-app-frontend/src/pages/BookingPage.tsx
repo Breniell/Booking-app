@@ -83,20 +83,17 @@ const DateTimeSelection = ({
   availabilities,
   selectedDate,
   onDateChange,
-  onTimeSelect
+  onTimeSelect,
+  setError // Ajout de setError ici
 }: {
   availabilities: Availability[];
   selectedDate: Date;
   onDateChange: (date: Date) => void;
   onTimeSelect: (time: string) => void;
+  setError: (error: string | null) => void; // Type pour setError
 }) => {
-  // Définir le mois courant dynamiquement
   const currentMonth = new Date();
   const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-
-  const start = startOfMonth(currentMonth);
-  const end = endOfMonth(currentMonth);
-  const daysInMonth = eachDayOfInterval({ start, end });
 
   const goToPreviousMonth = () => onDateChange(subMonths(selectedDate, 1));
   const goToNextMonth = () => onDateChange(addMonths(selectedDate, 1));
@@ -106,10 +103,10 @@ const DateTimeSelection = ({
     isSameDay(parseISO(a.date), selectedDate)
   );
 
-  // Si aucune disponibilité n’est renvoyée, on peut définir un créneau par défaut (optionnel)
+  // Si aucune disponibilité n’est renvoyée, on peut définir un créneau par défaut
   const defaultSlots = availabilityForDay?.slots.length
     ? availabilityForDay.slots
-    : ["09:00", "10:00"]; // Par exemple, un créneau par défaut
+    : ["09:00", "10:00"]; // Créneau par défaut
 
   return (
     <motion.div
@@ -137,7 +134,7 @@ const DateTimeSelection = ({
             {day}
           </div>
         ))}
-        {daysInMonth.map((day, idx) => {
+        {eachDayOfInterval({ start: startOfMonth(selectedDate), end: endOfMonth(selectedDate) }).map((day, idx) => {
           const isoDay = day.toISOString().split('T')[0];
           const isSelected = isSameDay(day, selectedDate);
           return (
@@ -159,7 +156,17 @@ const DateTimeSelection = ({
           {defaultSlots.map(slot => (
             <button
               key={slot}
-              onClick={() => onTimeSelect(slot)}
+              onClick={() => {
+                // Remplacez ceci par votre logique de créneau actuel
+                const currentSlot = { date: selectedDate.toISOString(), startTime: slot, endTime: slot }; // Exemple de définition
+                const start = new Date(`${currentSlot.date}T${currentSlot.startTime}`);
+                const end = new Date(`${currentSlot.date}T${currentSlot.endTime}`);
+                if (start >= end) {
+                  setError("L'heure de fin doit être après l'heure de début.");
+                  return;
+                }
+                onTimeSelect(slot);
+              }}
               className="p-3 rounded-lg bg-white border hover:border-blue-600 transition-colors min-w-[100px]"
             >
               {slot}

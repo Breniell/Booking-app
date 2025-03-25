@@ -4,7 +4,10 @@ import App from './App.tsx';
 import './dist/output.css';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
-// src/theme/index.tsx
+// Styles globaux (exemple avec styled-components)
+import { createGlobalStyle } from 'styled-components';
+
+// Thème
 export const theme = {
   colors: {
     primary: '#5E35B1',  // Violet professionnel
@@ -28,28 +31,29 @@ export const theme = {
   }
 };
 
-// // Styles globaux
-// export const GlobalStyles = createGlobalStyle`
-//   body {
-//     font-family: 'Inter', -apple-system, system-ui;
-//     background: ${theme.colors.background};
-//     color: ${theme.colors.text.primary};
-//   }
+const GlobalStyles = createGlobalStyle`
+  body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    background: ${theme.colors.background};
+    font-family: 'Inter', -apple-system, system-ui;
+    color: ${theme.colors.text.primary};
+  }
   
-//   .glass-effect {
-//     background: rgba(255, 255, 255, 0.9);
-//     backdrop-filter: blur(10px);
-//     -webkit-backdrop-filter: blur(10px);
-//   }
-// `;
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+`;
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <GoogleOAuthProvider clientId="VOTRE_CLIENT_ID_GOOGLE">
+      <GlobalStyles /> {/* Ajoutez les styles globaux ici */}
       <App />
     </GoogleOAuthProvider>
   </React.StrictMode>
 );
-
-

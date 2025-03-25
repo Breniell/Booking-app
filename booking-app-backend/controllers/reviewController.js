@@ -19,20 +19,26 @@ exports.getReviews = async (req, res) => {
 };
 
 // Créer un avis pour un service
+// controllers/reviewController.js
 exports.createReview = async (req, res) => {
   try {
     const serviceId = req.params.id;
     const { rating, comment } = req.body;
-    // Vous pouvez ajouter ici une validation supplémentaire
+    // Création de l'avis
     const review = await db.Review.create({
       serviceId,
-      userId: req.user.id,  // supposant que req.user est disponible grâce à l'authentification
+      userId: req.user.id,  // supposant que req.user est défini via l'authentification
       rating,
       comment
     });
-    res.status(201).json({ review, message: 'Avis créé avec succès' });
+    // Récupération des informations de l'utilisateur associé
+    const user = await db.User.findByPk(req.user.id, { 
+      attributes: ['firstName', 'lastName', 'avatar'] 
+    });
+    res.status(201).json({ review: { ...review.toJSON(), user }, message: 'Avis créé avec succès' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur lors de la création de l’avis', error: error.message });
   }
 };
+

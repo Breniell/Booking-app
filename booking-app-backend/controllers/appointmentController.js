@@ -3,6 +3,12 @@ const db = require('../models');
 const emailService = require('../utils/emailService');
 
 exports.createAppointment = async (req, res) => {
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
     const { serviceId, startTime, endTime } = req.body;
 
@@ -139,7 +145,7 @@ exports.getAppointmentsByExpert = async (req, res) => {
       where: { expertId },
       include: [
         { model: db.User, as: 'Client', attributes: ['firstName', 'lastName', 'email'] },
-        { model: db.Service, attributes: ['name', 'description', 'duration', 'price', 'videoPlatform', 'imageUrl'] }
+        { model: db.Service, as: 'service', attributes: ['name', 'description', 'duration', 'price', 'videoPlatform', 'imageUrl'] }
       ]
     });
     return res.status(200).json(appointments);
@@ -148,6 +154,7 @@ exports.getAppointmentsByExpert = async (req, res) => {
     return res.status(500).json({ message: 'Error retrieving appointments', error: error.message });
   }
 };
+
 
 exports.updateAppointment = async (req, res) => {
   try {

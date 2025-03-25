@@ -19,7 +19,7 @@ import  {CalendarManagement} from './pages/CalendarManagement.tsx';
 function App() {
   return (
     <Router>
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen w-full flex flex-col">
         <Routes>
           <Route path="/" element={<MainLayout />}>
             <Route index element={<HomePage />} />

@@ -27,8 +27,8 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, showQuickLinks = false }) 
             <span className="text-2xl">☰</span>
           </button>
         )}
-        <Link to="/" className="text-2xl font-bold" style={{ color: "#5E35B1" }}>
-          ReservEase
+        <Link to="/" className="text-2xl font-bold">
+          <span style={{ color: "#5E35B1" }}> Reserv</span><span style={{ color: "#00BFA5" }}>Ease</span>
         </Link>
         {showQuickLinks && (
           <div className="hidden md:flex space-x-6">

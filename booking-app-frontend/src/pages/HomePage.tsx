@@ -35,7 +35,7 @@ const HomePage: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="flex flex-col min-h-screen w-full max-w-none bg-gray-100 dark:bg-gray-900">
       <Hero />
 
       {/* Section À propos */}
@@ -45,7 +45,7 @@ const HomePage: React.FC = () => {
         transition={{ delay: 0.4, duration: 0.8 }}
         className="py-20 bg-white dark:bg-gray-800"
       >
-        <div className="container mx-auto px-8 text-center">
+        <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-6">
             À propos de ReservEase
           </h2>
@@ -53,7 +53,6 @@ const HomePage: React.FC = () => {
             ReservEase met en relation des clients et des experts pour simplifier la gestion de vos rendez-vous.
             Notre plateforme vous permet de réserver, gérer et synchroniser vos rendez-vous en toute simplicité.
           </p>
-          
         </div>
       </motion.section>
 
@@ -64,14 +63,12 @@ const HomePage: React.FC = () => {
         transition={{ delay: 0.6, duration: 0.8 }}
         className="py-20 bg-gray-50 dark:bg-gray-900"
       >
-        <div className="container mx-auto px-8">
+        <div className="container mx-auto px-4">
           <h2 className="text-4xl font-bold text-center text-gray-800 dark:text-gray-100 mb-10">
             Nos Services
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {services.map((service) => {
-              // Si imageUrl est définie et ne commence pas par "http" ou "/assets",
-              // on préfixe avec l'URL du backend.
               const imageSrc =
                 service.imageUrl &&
                 !service.imageUrl.startsWith('http') &&
@@ -83,9 +80,9 @@ const HomePage: React.FC = () => {
                 <motion.div
                   key={service.id}
                   whileHover={{ scale: 1.03 }}
-                  className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 transition-shadow"
+                  className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transition-shadow"
                 >
-                  <img src={imageSrc} alt={service.name} className="mt-4 rounded-lg shadow-md"  crossOrigin="anonymous"/>
+                  <img src={imageSrc} alt={service.name} className="w-full h-48 object-cover rounded-lg shadow-md" crossOrigin="anonymous" />
                   <h3 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
                     {service.name}
                   </h3>
@@ -98,7 +95,6 @@ const HomePage: React.FC = () => {
                       {service.price.toLocaleString()} XAF
                     </span>
                   </div>
-                  
                 </motion.div>
               );
             })}
@@ -118,7 +114,7 @@ const HomePage: React.FC = () => {
         transition={{ delay: 0.8, duration: 0.8 }}
         className="py-20 bg-white dark:bg-gray-800"
       >
-        <div className="container mx-auto px-8 text-center">
+        <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-10">Fonctionnalités Clés</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             <div className="p-8 border rounded-xl hover:shadow-xl transition-shadow">
@@ -128,7 +124,6 @@ const HomePage: React.FC = () => {
               <p className="text-lg text-gray-600 dark:text-gray-300">
                 Gérez vos rendez-vous, services et notifications depuis une interface unique.
               </p>
-            
             </div>
             <div className="p-8 border rounded-xl hover:shadow-xl transition-shadow">
               <h3 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
@@ -145,7 +140,6 @@ const HomePage: React.FC = () => {
               <p className="text-lg text-gray-600 dark:text-gray-300">
                 Recevez des rappels automatiques et effectuez vos paiements en toute sécurité.
               </p>
-              
             </div>
           </div>
         </div>
@@ -158,7 +152,7 @@ const HomePage: React.FC = () => {
         transition={{ delay: 1.0, duration: 0.8 }}
         className="py-20 bg-gray-50 dark:bg-gray-900"
       >
-        <div className="container mx-auto px-8 text-center">
+        <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-10">Témoignages</h2>
           <div className="space-y-10">
             <motion.div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-10" whileHover={{ scale: 1.02 }}>
@@ -176,7 +170,6 @@ const HomePage: React.FC = () => {
               <p className="text-2xl text-gray-800 dark:text-gray-100 font-semibold">
                 – Maffo Marie, Expert
               </p>
-              
             </motion.div>
           </div>
         </div>
@@ -189,7 +182,7 @@ const HomePage: React.FC = () => {
         transition={{ delay: 1.2, duration: 0.8 }}
         className="py-20 bg-white dark:bg-gray-800"
       >
-        <div className="container mx-auto px-8">
+        <div className="container mx-auto px-4">
           <h2 className="text-4xl font-bold text-center text-gray-800 dark:text-gray-100 mb-10">Dernières Actualités</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             <div className="bg-gray-100 dark:bg-gray-700 rounded-xl p-8 shadow-lg hover:shadow-2xl transition-shadow">
@@ -200,7 +193,6 @@ const HomePage: React.FC = () => {
               <Link to="/blog" className="text-primary hover:underline font-medium text-xl">
                 Lire l'article
               </Link>
-              
             </div>
             <div className="bg-gray-100 dark:bg-gray-700 rounded-xl p-8 shadow-lg hover:shadow-2xl transition-shadow">
               <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">Conseils de Réservation</h3>
@@ -219,7 +211,6 @@ const HomePage: React.FC = () => {
               <Link to="/blog" className="text-primary hover:underline font-medium text-xl">
                 Lire l'article
               </Link>
-              
             </div>
           </div>
         </div>
