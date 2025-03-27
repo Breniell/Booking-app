@@ -38,7 +38,8 @@ const Register: React.FC = () => {
             const { token, user } = response.data;  
             localStorage.setItem('token', token);  
             setUser(user);  
-            navigate(user.role === 'expert' ? '/expert/dashboard' : '/client/dashboard');  
+            navigate('/');  
+            //user.role === 'expert' ? '/expert/dashboard' : '/client/dashboard'
         } catch (err: any) {  
             setError(err.response?.data?.message || 'Erreur lors de l\'inscription');  
         } finally {  

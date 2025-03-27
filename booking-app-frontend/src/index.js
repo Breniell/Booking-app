@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
 import './dist/output.css';
+import api from './lib/api.ts';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
 // Styles globaux (exemple avec styled-components)
@@ -47,6 +48,15 @@ const GlobalStyles = createGlobalStyle`
     -webkit-backdrop-filter: blur(10px);
   }
 `;
+
+
+
+// Si un token est stocké, on le réinjecte dans les headers d'axios
+const token = localStorage.getItem('token');
+if (token) {
+  api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
+
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

@@ -10,16 +10,18 @@ const DashboardLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  // Vérification d'accès (à compléter selon vos règles)
   useEffect(() => {
-    if (!user || !(user.role === 'expert' || user.role === 'client')) {
-      // Rediriger vers la page d'accueil ou login si l'utilisateur n'est pas autorisé
+    const token = localStorage.getItem('token');
+    if (!user && !token) {
+      // Si l'utilisateur n'est pas authentifié, rediriger
       navigate('/login', { replace: true });
+    } else {
+      setIsCheckingAuth(false);
     }
   }, [user, navigate]);
 
-  // On évite que l'utilisateur ne revienne accidentellement sur le dashboard en cliquant "retour"
   useEffect(() => {
     if (location.state && location.state.fromMain) {
       navigate(location.pathname, { replace: true });
@@ -28,23 +30,26 @@ const DashboardLayout: React.FC = () => {
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex-1 flex flex-col">
-        {/* Optionnel : un bouton en haut à gauche pour réactiver la sidebar si elle est fermée */}
-        <div className="p-4">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="text-gray-700 focus:outline-none"
-          >
-            {/* Icône de hamburger ou similaire */}
-            ☰
-          </button>
+      {isCheckingAuth ? (
+        <div className="w-full flex items-center justify-center">
+          <p>Chargement…</p>
         </div>
-        <main className="flex-grow p-4">
-          <Outlet />
-        </main>
-        <Footer />
-      </div>
+      ) : (
+        <>
+          <Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />
+          <div className="flex-1 flex flex-col">
+            <div className="p-4">
+              <button onClick={() => setSidebarOpen(true)} className="text-gray-700 focus:outline-none">
+                ☰
+              </button>
+            </div>
+            <main className="flex-grow p-4">
+              <Outlet />
+            </main>
+            <Footer />
+          </div>
+        </>
+      )}
     </div>
   );
 };

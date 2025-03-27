@@ -14,6 +14,16 @@
             "date": 1742880909344,
             "name": "logs\\booking-app-2025-03-25.log",
             "hash": "465e01219d4f54d6eb4cb030cc135a3e7f2d223338eaf1b596fe7378f95c7a2f"
+        },
+        {
+            "date": 1742998206903,
+            "name": "logs\\booking-app-2025-03-26.log",
+            "hash": "cd643d43898f9f114f853c8df3d1cd8997eb926632b61d42cd9df67e9128aeea"
+        },
+        {
+            "date": 1743052842187,
+            "name": "logs\\booking-app-2025-03-27.log",
+            "hash": "96227aee0666d6849979ede8c7a4c69472299da5934de829d10d9e39fe972c82"
         }
     ],
     "hashType": "sha256"
