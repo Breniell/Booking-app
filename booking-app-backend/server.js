@@ -22,7 +22,10 @@ const logger = require('./utils/logger');
 const reviewRoutes = require('./routes/reviewRoutes');  
 const { i18n } = require("./middleware/i18n");  
 const swaggerJsdoc = require('swagger-jsdoc');  
-const swaggerUi = require('swagger-ui-express');  
+const swaggerUi = require('swagger-ui-express');
+const notificationRoutes = require('./routes/notificationRoutes');
+const clientRoutes = require('./routes/clientRoutes');
+
 // const Sentry = require('@sentry/node');  
 
 // Charger le fichier d'environnement approprié  
@@ -106,6 +109,7 @@ app.use('/assets', express.static(path.join(__dirname, 'assets'), {
 // Définition des routes  
 app.use('/api/users', userRoutes);  
 app.use('/api/experts', expertRoutes);  
+app.use('/api/clients', clientRoutes);
 app.use('/api/services', serviceRoutes);  
 app.use('/api/appointments', appointmentRoutes);  
 app.use('/api/payments/flutterwave', flutterwaveRoutes);  
@@ -117,6 +121,9 @@ app.use('/api/video', videoConferenceRoutes);
 app.use('/api/expert-stats', expertStatsRoutes);  
 app.use('/api/services', reviewRoutes);  
 app.use('/api/search', require('./routes/searchRoutes'));  
+app.use('/api/notifications', notificationRoutes);
+
+
 
 // Route racine  
 app.get('/', (req, res) => {  

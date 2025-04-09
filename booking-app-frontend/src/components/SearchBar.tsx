@@ -1,8 +1,10 @@
 // src/components/SearchBar.tsx
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import styled from '@emotion/styled';
 import { Search, X } from 'lucide-react';
 import axios from 'axios';
+import api from '../lib/api.ts';
 
 interface SearchResult {
   id: number;
@@ -10,11 +12,39 @@ interface SearchResult {
   type: 'expert' | 'service';
 }
 
+// Composant stylisé isolé des styles globaux via Emotion
+const ResultsContainer = styled(motion.div)`
+  background-color: #ffffff !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  z-index: 50;
+  margin-top: 0.5rem;
+  width: 100%;
+  position: absolute;
+  top: 100%;
+`;
+
 export function SearchBar() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isFocused, setIsFocused] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Variants pour animer la liste avec un effet de stagger
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: { opacity: 1, x: 0 },
+  };
 
   const handleSearch = async (value: string) => {
     setQuery(value);
@@ -24,10 +54,15 @@ export function SearchBar() {
     }
     try {
       setLoading(true);
-      const response = await axios.get(`/search`, { params: { query: value } });
+      const response = await api.get(`/search`, { params: { query: value } });
       setResults(response.data);
     } catch (error) {
-      console.error('Error fetching search results:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Erreur de recherche:', error.response?.data);
+      } else {
+        console.error('Erreur inconnue:', error);
+      }
+      setResults([]);
     } finally {
       setLoading(false);
     }
@@ -46,7 +81,10 @@ export function SearchBar() {
           onBlur={() => setTimeout(() => setIsFocused(false), 200)}
           aria-label="Barre de recherche"
         />
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+        <Search
+          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+          size={20}
+        />
         {query && (
           <button
             onClick={() => {
@@ -62,51 +100,57 @@ export function SearchBar() {
       </div>
       <AnimatePresence>
         {isFocused && results.length > 0 && (
-          <motion.div
+          <ResultsContainer
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute top-full mt-2 w-full bg-white rounded-lg shadow-lg overflow-hidden z-50"
           >
-            <ul>
+            <motion.ul
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+            >
               {results.map((result) => (
-                <li
+                <motion.li
                   key={result.id}
+                  variants={itemVariants}
                   className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center justify-between"
                   onClick={() => {
-                    window.location.href = result.type === 'expert'
-                      ? `/expert/${result.id}`
-                      : `/service/${result.id}`;
+                    window.location.href =
+                      result.type === 'expert'
+                        ? `/expert/${result.id}`
+                        : `/service/${result.id}`;
                   }}
                 >
                   <span>{result.name}</span>
                   <span className="text-sm text-gray-500">
                     {result.type === 'expert' ? 'Expert' : 'Service'}
                   </span>
-                </li>
+                </motion.li>
               ))}
-            </ul>
-          </motion.div>
+            </motion.ul>
+          </ResultsContainer>
         )}
         {isFocused && query && results.length === 0 && !loading && (
-          <motion.div
+          <ResultsContainer
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute top-full mt-2 w-full bg-white rounded-lg shadow-lg overflow-hidden z-50 p-4 text-center text-gray-500"
+            className="p-4 text-center text-gray-500"
           >
             Aucun résultat trouvé.
-          </motion.div>
+          </ResultsContainer>
         )}
         {isFocused && loading && (
-          <motion.div
+          <ResultsContainer
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute top-full mt-2 w-full bg-white rounded-lg shadow-lg overflow-hidden z-50 p-4 text-center text-gray-500"
+            className="p-4 text-center text-gray-500"
           >
             Recherche en cours...
-          </motion.div>
+          </ResultsContainer>
         )}
       </AnimatePresence>
     </div>

@@ -2,12 +2,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
-const images = [
-  '/assets/pexels-tima-miroshnichenko-6693661.jpg',
-  '/assets/young-african-american-man-with-beard-holding-pile-books-smiling-happy-pointing-with-hand-finger-side.jpg',
-  '/assets/business-man-banner-concept-with-copy-space.jpg'
+const fallbackImages = [
+  'https://images.pexels.com/photos/6693661/pexels-photo-6693661.jpeg?auto=compress&cs=tinysrgb&w=1600',
+  'https://images.pexels.com/photos/3760863/pexels-photo-3760863.jpeg?auto=compress&cs=tinysrgb&w=1600',
+  'https://images.pexels.com/photos/3184287/pexels-photo-3184287.jpeg?auto=compress&cs=tinysrgb&w=1600'
 ];
 
 const Hero: React.FC = () => {
@@ -16,7 +16,7 @@ const Hero: React.FC = () => {
 
   const startSlide = () => {
     intervalRef.current = setInterval(() => {
-      setCurrent(prev => (prev + 1) % images.length);
+      setCurrent(prev => (prev + 1) % fallbackImages.length);
     }, 5000);
   };
 
@@ -31,17 +31,23 @@ const Hero: React.FC = () => {
 
   return (
     <section
-      className="relative w-screen h-screen overflow-hidden"
+      className="relative w-full flex-grow overflow-hidden"
       style={{
+        height: 'calc(100vh - 64px)',
         marginLeft: 'calc(-50vw + 50%)',
-        width: '100vw',
-        fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif'
+        width: '100vw'
       }}
       aria-label="Section d'accueil"
       onMouseEnter={stopSlide}
       onMouseLeave={startSlide}
     >
-      {/* Carrousel d'images */}
+      {/* Option Vidéo de fond : décommente si tu as une vidéo à utiliser */}
+      {/*
+      <video autoPlay muted loop className="absolute inset-0 w-full h-full object-cover">
+        <source src="https://cdn.videvo.net/videvo_files/video/free/2014-11/large_watermarked/Beach_Breeze_preview.mp4" type="video/mp4" />
+      </video>
+      */}
+      {/* Carrousel d'images (fallback) */}
       <AnimatePresence initial={false}>
         <motion.div
           key={current}
@@ -52,7 +58,7 @@ const Hero: React.FC = () => {
           className="absolute inset-0 w-full h-full"
         >
           <img
-            src={images[current]}
+            src={fallbackImages[current]}
             alt={`Slide ${current + 1}`}
             className="w-full h-full object-cover"
             style={{ minWidth: '100vw' }}
@@ -60,7 +66,7 @@ const Hero: React.FC = () => {
         </motion.div>
       </AnimatePresence>
 
-      {/* Overlay avec dégradé */}
+      {/* Overlay dynamique */}
       <div 
         className="absolute inset-0"
         style={{
@@ -68,39 +74,7 @@ const Hero: React.FC = () => {
         }}
       />
 
-      {/* Boutons de navigation */}
-      <div className="absolute inset-0 flex items-center justify-between px-4 z-20">
-        <button
-          className="p-3 rounded-full backdrop-blur-sm transition-all duration-300 hover:scale-110"
-          style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.2)'
-          }}
-          onClick={() => setCurrent(prev => (prev - 1 + images.length) % images.length)}
-        >
-          <ChevronLeft 
-            size={32} 
-            style={{ color: '#FFFFFF' }}
-            strokeWidth={2.5}
-          />
-        </button>
-        <button
-          className="p-3 rounded-full backdrop-blur-sm transition-all duration-300 hover:scale-110"
-          style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.2)'
-          }}
-          onClick={() => setCurrent(prev => (prev + 1) % images.length)}
-        >
-          <ChevronRight 
-            size={32} 
-            style={{ color: '#FFFFFF' }}
-            strokeWidth={2.5}
-          />
-        </button>
-      </div>
-
-      {/* Contenu centré */}
+      {/* Contenu centré avec CTA */}
       <div className="relative z-10 w-full h-full flex flex-col items-center justify-center text-center px-4 md:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -112,8 +86,7 @@ const Hero: React.FC = () => {
             className="text-4xl md:text-6xl font-bold leading-tight"
             style={{
               color: '#FFFFFF',
-              textShadow: '0 4px 12px rgba(0,0,0,0.4)',
-              fontFamily: 'system-ui, -apple-system, sans-serif'
+              textShadow: '0 4px 12px rgba(0,0,0,0.4)'
             }}
           >
             Réservez vos rendez-vous
@@ -149,16 +122,18 @@ const Hero: React.FC = () => {
             transition={{ delay: 0.9 }}
           >
             <Link
-              to="/experts"
-              className="inline-flex items-center justify-center rounded-xl text-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-xl"
+              to="/login"
+              className="inline-flex items-center justify-center rounded-xl text-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-xl cursor-pointer"
               style={{
                 backgroundColor: '#5E35B1',
                 color: '#FFFFFF',
                 padding: '1rem 2rem',
-                minWidth: '220px'
+                minWidth: '220px',
+                position: 'relative',
+                zIndex: 20
               }}
             >
-              Trouver un Expert
+              Commencer
               <ChevronRight 
                 className="ml-2" 
                 size={22}

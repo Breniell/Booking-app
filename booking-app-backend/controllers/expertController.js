@@ -21,7 +21,7 @@ exports.getExpertProfile = async (req, res) => {
     const { userId } = req.params;
     const expert = await db.Expert.findOne({
       where: { userId },
-      include: [{ model: db.User, attributes: ['firstName', 'lastName', 'email'] }]
+      include: [{ association: 'User', attributes: ['firstName', 'lastName', 'email'] }]
     });
     if (!expert) {
       return res.status(404).json({ message: 'Expert profile not found' });

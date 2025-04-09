@@ -14,7 +14,12 @@ import Services from './pages/Services.tsx';
 import CreateServicePage from './pages/CreateServicePage.tsx';
 import { ThirdPartyServices } from './pages/ThirdPartyServices.tsx';
 import VideoConferencePage from './pages/VideoConferencePage.tsx';
-import  {CalendarManagement} from './pages/CalendarManagement.tsx';
+import  CalendarManagement from './pages/CalendarManagement.tsx';
+import BasketPage from './pages/BasketPage.tsx';
+import NotificationsPage from './pages/NotificationsPage.tsx';
+import ExpertProfile from './pages/ExpertProfile.tsx';
+import ClientProfile from './pages/ClientProfile.tsx';
+
 
 function App() {
   return (
@@ -30,13 +35,17 @@ function App() {
             <Route path="booking-confirmation" element={<BookingConfirmation />} />
             <Route path="video" element={<VideoConferencePage />} />
             <Route path="third-party" element={<ThirdPartyServices />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="basket" element={<BasketPage />} />
         </Route>
 
 
           <Route element={<DashboardLayout/>}>
             <Route path="expert/calendar" element={<CalendarManagement />} />
             <Route path="expert/dashboard" element={<Dashboard />} />
+            <Route path="expert/profile" element={<ExpertProfile />} />
             <Route path="client/dashboard" element={<Dashboard />} />
+            <Route path="client/profile" element={<ClientProfile />} />
             <Route path="expert/services/create" element={<CreateServicePage />} />
           </Route>
 

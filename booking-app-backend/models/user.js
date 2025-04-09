@@ -2,7 +2,6 @@
 const { DataTypes } = require('sequelize');
 const bcrypt = require("bcryptjs");
 
-
 module.exports = (sequelize) => {
   const User = sequelize.define('User', {
     id: {
@@ -30,6 +29,10 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING,
       allowNull: true
     },
+    phone: {                   // Ajout du champ phone
+      type: DataTypes.STRING,
+      allowNull: true
+    },
     password: {
       type: DataTypes.STRING,
       allowNull: false
@@ -44,26 +47,25 @@ module.exports = (sequelize) => {
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(user.password, salt);
       },
-      beforeUpdate: async (user) => {  //Handle password updates
+      beforeUpdate: async (user) => {
          if (user.changed('password')) {
            const salt = await bcrypt.genSalt(10);
            user.password = await bcrypt.hash(user.password, salt);
          }
       }
     },
-    instanceMethods: { //For older Sequelize versions, use instanceMethods
+    instanceMethods: {
       validPassword: async function(password) {
         return await bcrypt.compare(password, this.password);
       }
     },
-    // Newer Sequelize version use this
     validatePassword: async function(password) {
-        return await bcrypt.compare(password, this.password);
-      }
+      return await bcrypt.compare(password, this.password);
+    }
   });
 
   User.prototype.validPassword = async function(password) {
-       return await bcrypt.compare(password, this.password);
+    return await bcrypt.compare(password, this.password);
   };
   return User;
 };

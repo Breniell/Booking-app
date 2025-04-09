@@ -4,11 +4,6 @@ import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-/* 
-  Références : AdminLTE, CoreUI Free React Admin Template, Material Dashboard React, etc.
-  Le design est aéré et optimisé pour la lisibilité.
-*/
-
 const Footer: React.FC = () => {
   return (
     <motion.footer

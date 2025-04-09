@@ -1,6 +1,8 @@
 {
   "dependencies": {
-    "react-icons": "^5.5.0"
+    "framer-motion": "^12.6.3",
+    "react-icons": "^5.5.0",
+    "styled-components": "^6.1.17"
   },
   "devDependencies": {
     "gh-pages": "^6.3.0"

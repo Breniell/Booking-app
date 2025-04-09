@@ -17,6 +17,9 @@ router.post(
     appointmentController.createAppointment
   );
 
+router.post('/multi', authenticate, appointmentController.createMultiAppointment);
+
+
 // Get an appointment by ID
 router.get('/:id', authenticate, appointmentController.getAppointment);
 

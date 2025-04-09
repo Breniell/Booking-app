@@ -1,7 +1,7 @@
 // controllers/serviceController.js
-// controllers/serviceController.js
 const db = require('../models');
 const path = require('path');
+const { Op } = require('sequelize');
 
 exports.createService = async (req, res) => {
   try {
@@ -58,11 +58,7 @@ exports.createService = async (req, res) => {
   }
 };
 
-
-//Get all the services 
-
-const { Op } = require('sequelize');
-
+// Get all services with optional search (et autres filtres éventuels)
 exports.getAllServices = async (req, res) => {
   try {
     const { search, category, rating } = req.query;
@@ -70,10 +66,7 @@ exports.getAllServices = async (req, res) => {
     if (search) {
       filters.name = { [Op.like]: `%${search}%` };
     }
-    // if (category) {
-    //   filters.category = category;
-    // }
-    // Vous pouvez également filtrer par note si vous stockez une moyenne dans le modèle Service
+    // Possibilité d'ajouter d'autres filtres
     const services = await db.Service.findAll({ where: filters });
     res.status(200).json(services);
   } catch (error) {
@@ -82,27 +75,46 @@ exports.getAllServices = async (req, res) => {
   }
 };
 
-  
-
-// Get all services by an expert
+// Get all services by an expert with tri (via query param "sort")
 exports.getServicesByExpert = async (req, res) => {
   try {
-    // Essayer de trouver l'enregistrement Expert correspondant au userId fourni
-    let expert = await db.Expert.findOne({ where: { userId: req.params.expertId } });
-    
-    let services;
-    if (!expert) {
-      // Si aucun enregistrement Expert n'est trouvé,
-      // tenter de récupérer les services en considérant que l'ID de l'expert est égal à l'ID de l'utilisateur.
-      services = await db.Service.findAll({ where: { expertId: req.params.expertId } });
-    } else {
-      services = await db.Service.findAll({ where: { expertId: expert.id } });
+    const expertId = parseInt(req.params.expertId, 10);
+    const { sort } = req.query;
+    let order = [];
+    if (sort) {
+      switch (sort) {
+        case 'price-asc':
+          order.push(['price', 'ASC']);
+          break;
+        case 'price-desc':
+          order.push(['price', 'DESC']);
+          break;
+        case 'duration-asc':
+          order.push(['duration', 'ASC']);
+          break;
+        case 'duration-desc':
+          order.push(['duration', 'DESC']);
+          break;
+        default:
+          break;
+      }
     }
-    
+    const services = await db.Service.findAll({ 
+      where: { expertId },
+      include: [{
+        model: db.Expert,
+        include: [{
+          model: db.User,
+          as: 'User'
+        }]
+      }],
+      order
+    });
+
     return res.status(200).json(services);
   } catch (error) {
     console.error(error);
-   return res.status(500).json({ message: 'Erreur serveur' });
+    return res.status(500).json({ message: 'Erreur serveur', error: error.message });
   }
 };
 
@@ -113,10 +125,9 @@ exports.getService = async (req, res) => {
     const service = await db.Service.findByPk(id, {
       include: [{
         model: db.Expert,
-        // Inclure le modèle User associé à l'expert via l'association définie
         include: [{
           model: db.User,
-          as: 'User', // Cet alias doit correspondre à celui défini dans l'association (cf. ci-dessous)
+          as: 'User',
           attributes: ['firstName', 'lastName']
         }]
       }]
@@ -125,9 +136,8 @@ exports.getService = async (req, res) => {
       return res.status(404).json({ message: 'Service not found' });
     }
 
-     // Si l'image est stockée avec un chemin relatif, construire une URL absolue.
+    // Si l'image est stockée en chemin relatif, construire une URL absolue.
     if (service.imageUrl && !service.imageUrl.startsWith('http')) {
-      // Remplacer les éventuels backslashes par des slashs pour les URL
       const normalizedPath = service.imageUrl.replace(/\\/g, '/');
       service.imageUrl = `${req.protocol}://${req.get('host')}/${normalizedPath}`;
     }
@@ -139,74 +149,65 @@ exports.getService = async (req, res) => {
   }
 };
 
-
 // Update a service (Expert Only)
 exports.updateService = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { name, description, duration, price } = req.body;
+  try {
+    const { id } = req.params;
+    const { name, description, duration, price } = req.body;
 
-        const service = await db.Service.findByPk(id);
+    const service = await db.Service.findByPk(id);
 
-        if (!service) {
-            return res.status(404).json({ message: 'Service not found' });
-        }
-
-        //Get expertId based on logged in user
-        const expert = await db.Expert.findOne({ where: { userId: req.user.id } });
-
-        if (!expert) {
-            return res.status(404).json({ message: 'Expert profile not found' });
-        }
-
-        if (service.expertId !== expert.id) {
-            return res.status(403).json({ message: 'Unauthorized: You can only update your own services' });
-        }
-
-        service.name = name;
-        service.description = description;
-        service.duration = duration;
-        service.price = price;
-        await service.save();
-
-        return res.status(200).json({ message: 'Service updated successfully', service });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Error updating service', error: error.message });
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
     }
+
+    const expert = await db.Expert.findOne({ where: { userId: req.user.id } });
+    if (!expert) {
+      return res.status(404).json({ message: 'Expert profile not found' });
+    }
+    if (service.expertId !== expert.id) {
+      return res.status(403).json({ message: 'Unauthorized: You can only update your own services' });
+    }
+
+    service.name = name;
+    service.description = description;
+    service.duration = duration;
+    service.price = price;
+    await service.save();
+
+    return res.status(200).json({ message: 'Service updated successfully', service });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Error updating service', error: error.message });
+  }
 };
 
 // Delete a service (Expert Only)
 exports.deleteService = async (req, res) => {
-    try {
-        const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-        if (!req.user) {
-          return res.status(401).json({ message: 'Authentication required' });
-        }
-
-        const service = await db.Service.findByPk(id);
-
-        if (!service) {
-            return res.status(404).json({ message: 'Service not found' });
-        }
-
-        //Get expertId based on logged in user
-        const expert = await db.Expert.findOne({ where: { userId: req.user.id } });
-
-        if (!expert) {
-            return res.status(404).json({ message: 'Expert profile not found' });
-        }
-
-        if (service.expertId !== expert.id) {
-            return res.status(403).json({ message: 'Unauthorized: You can only delete your own services' });
-        }
-
-        await service.destroy();
-
-        return res.status(200).json({ message: 'Service deleted successfully' });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Error deleting service', error: error.message });
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
     }
+
+    const service = await db.Service.findByPk(id);
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    const expert = await db.Expert.findOne({ where: { userId: req.user.id } });
+    if (!expert) {
+      return res.status(404).json({ message: 'Expert profile not found' });
+    }
+    if (service.expertId !== expert.id) {
+      return res.status(403).json({ message: 'Unauthorized: You can only delete your own services' });
+    }
+
+    await service.destroy();
+    return res.status(200).json({ message: 'Service deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Error deleting service', error: error.message });
+  }
 };

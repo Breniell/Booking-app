@@ -2,243 +2,346 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, CheckCircle, Loader, ArrowLeft, ArrowRight } from 'lucide-react';
+import { CheckCircle, Loader, ArrowLeft, ArrowRight } from 'lucide-react';
 import {
-  format,
   startOfMonth,
   endOfMonth,
   eachDayOfInterval,
   subMonths,
   addMonths,
   isSameDay,
-  parseISO
+  parseISO,
+  format,
 } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import axios from 'axios';
-import { useAuthStore } from '../lib/store.ts';
 import api from '../lib/api.ts';
+import { useAuthStore } from '../lib/store.ts';
+import { useBasketStore } from '../lib/basketStore.ts';
+import styled from 'styled-components';
+import { toZonedTime } from 'date-fns-tz';
 
-interface Service {
-  id: string;
-  name: string;
-  description: string;
-  duration: number;
-  price: number;
-  category: string;
-}
+/* ---------- Composants Styled ---------- */
+const Container = styled.div`
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #f9fafb;
+  min-height: 100vh;
+`;
 
-interface Availability {
-  date: string; // Format ISO, ex. "2025-10-15T00:00:00.000Z"
-  slots: string[];
-}
+const Card = styled(motion.div)`
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+  padding: 2rem;
+`;
+
+const Title = styled.h2`
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1rem;
+`;
+
+const Text = styled.p`
+  font-size: 1rem;
+  color: #374151;
+  margin-bottom: 1rem;
+`;
+
+const Button = styled.button<{ primary?: boolean }>`
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  cursor: pointer;
+  border: none;
+  ${({ primary }) =>
+    primary
+      ? `
+    background-color: #3b82f6;
+    color: #ffffff;
+    &:hover {
+      background-color: #2563eb;
+      transform: scale(1.02);
+    }
+  `
+      : `
+    background-color: #e5e7eb;
+    color: #374151;
+    &:hover {
+      background-color: #d1d5db;
+    }
+  `}
+`;
+
+const CalendarGridContainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+`;
+
+const DayCell = styled.button<{ selected: boolean; available: boolean }>`
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  border: none;
+  cursor: pointer;
+  background-color: ${({ selected, available }) =>
+    selected ? '#3b82f6' : available ? '#d1fae5' : '#e5e7eb'};
+  color: ${({ selected, available }) =>
+    selected ? '#ffffff' : available ? '#065f46' : '#6b7280'};
+`;
+
+const SlotButton = styled.button`
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  background-color: #ffffff;
+  transition: border-color 0.3s ease;
+  min-width: 100px;
+  cursor: pointer;
+  &:hover {
+    border-color: #3b82f6;
+  }
+`;
+
+/* ---------- Composants de la Page ---------- */
 
 /** ProgressIndicator **/
 const ProgressIndicator = ({ step }: { step: number }) => (
-  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-8">
-    <div className="flex items-center gap-4">
-      {[1, 2, 3].map(num => (
-        <div key={num} className="flex items-center gap-2">
+  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginBottom: '2rem' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      {[1, 2, 3].map((num) => (
+        <div key={num} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <div
-            className={`h-8 w-8 rounded-full flex items-center justify-center ${
-              num <= step ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
-            }`}
+            style={{
+              height: '2rem',
+              width: '2rem',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: num <= step ? '#3b82f6' : '#e5e7eb',
+              color: num <= step ? '#ffffff' : '#6b7280',
+            }}
           >
             {num < step ? <CheckCircle size={18} /> : num}
           </div>
-          {num < 3 && <div className="h-px w-8 bg-gray-300" />}
+          {num < 3 && <div style={{ height: '1px', width: '2rem', backgroundColor: '#d1d5db' }} />}
         </div>
       ))}
     </div>
   </motion.div>
 );
 
-/** Étape 1 : Sélection du service **/
-const ServiceSelection = ({ services, onSelect }: { services: Service[]; onSelect: (service: Service) => void; }) => (
-  <motion.div
-    initial={{ opacity: 0, x: 30 }}
-    animate={{ opacity: 1, x: 0 }}
-    exit={{ opacity: 0, x: -30 }}
-    className="grid grid-cols-1 md:grid-cols-2 gap-6"
-  >
-    {services.map(service => (
-      <motion.div
-        key={service.id}
-        whileHover={{ scale: 1.03 }}
-        onClick={() => onSelect(service)}
-        className="p-6 border rounded-xl cursor-pointer transition-all hover:border-blue-600 hover:shadow-lg"
+/** ServiceSelection **/
+const ServiceSelection = ({
+  services,
+  onSelect,
+  selectedService,
+}: {
+  services: Service[];
+  onSelect: (service: Service) => void;
+  selectedService?: Service;
+}) => {
+  if (selectedService) {
+    return (
+      <Card
+        initial={{ opacity: 0, x: 30 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -30 }}
       >
-        <h3 className="text-xl font-semibold mb-2 text-gray-800">{service.name}</h3>
-        <p className="text-gray-600 mb-4">{service.description}</p>
-        <div className="flex items-center justify-between text-sm text-gray-500">
-          <span>{service.duration} minutes</span>
-          <span className="text-blue-600 font-medium">{service.price.toLocaleString()} XAF</span>
+        <Title>{selectedService.name}</Title>
+        <Text>{selectedService.description}</Text>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', color: '#6b7280' }}>
+          <span>Durée : {selectedService.duration} minutes</span>
+          <span style={{ color: '#3b82f6' }}>{selectedService.price.toLocaleString()} XAF</span>
         </div>
-      </motion.div>
-    ))}
-  </motion.div>
-);
+        {selectedService.videoPlatform && <Text>Plateforme : {selectedService.videoPlatform}</Text>}
+      </Card>
+    );
+  }
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 30 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -30 }}
+      style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}
+    >
+      {services.map((service) => (
+        <Card
+          key={service.id}
+          whileHover={{ scale: 1.03 }}
+          onClick={() => onSelect(service)}
+          style={{ cursor: 'pointer' }}
+        >
+          <Title style={{ fontSize: '1.25rem' }}>{service.name}</Title>
+          <Text>{service.description}</Text>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#6b7280' }}>
+            <span>{service.duration} minutes</span>
+            <span style={{ color: '#3b82f6' }}>{service.price.toLocaleString()} XAF</span>
+          </div>
+        </Card>
+      ))}
+    </motion.div>
+  );
+};
 
-/** Étape 2 : Sélection de la date et de l'heure via calendrier **/
+/** DateTimeSelection **/
 const DateTimeSelection = ({
   availabilities,
   selectedDate,
   onDateChange,
   onTimeSelect,
-  setError // Ajout de setError ici
-}: {
-  availabilities: Availability[];
-  selectedDate: Date;
-  onDateChange: (date: Date) => void;
-  onTimeSelect: (time: string) => void;
-  setError: (error: string | null) => void; // Type pour setError
-}) => {
-  const currentMonth = new Date();
+  setError,
+  serviceDuration,
+}: DateTimeSelectionProps) => {
   const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-
   const goToPreviousMonth = () => onDateChange(subMonths(selectedDate, 1));
   const goToNextMonth = () => onDateChange(addMonths(selectedDate, 1));
 
-  // Récupérer les disponibilités pour la date sélectionnée
-  const availabilityForDay = availabilities.find(a =>
-    isSameDay(parseISO(a.date), selectedDate)
-  );
+  // Formater la date sélectionnée au format "yyyy-MM-dd" en UTC
+  const formattedSelectedDate = format(selectedDate, 'yyyy-MM-dd', { timeZone: 'UTC' });
+  console.log("Date sélectionnée :", formattedSelectedDate, "Disponibilités :", availabilities.map(a => a.date));
 
-  // Si aucune disponibilité n’est renvoyée, on peut définir un créneau par défaut
-  const defaultSlots = availabilityForDay?.slots.length
+  // Recherche de la disponibilité correspondant exactement à la date
+  const availabilityForDay = availabilities.find((a) => a.date === formattedSelectedDate);
+  const defaultSlots = (availabilityForDay && Array.isArray(availabilityForDay.slots))
     ? availabilityForDay.slots
-    : ["09:00", "10:00"]; // Créneau par défaut
+    : [];
 
   return (
     <motion.div
       initial={{ opacity: 0, x: 30 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -30 }}
-      className="space-y-6"
+      style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
     >
       {/* Navigation du mois */}
-      <div className="flex items-center justify-between mb-4">
-        <button onClick={goToPreviousMonth} className="p-2 rounded hover:bg-gray-200">
-          <ArrowLeft size={18} />
-        </button>
-        <div className="font-bold text-lg text-gray-800">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Button onClick={goToPreviousMonth}> <ArrowLeft size={18} /> </Button>
+        <div style={{ fontWeight: 700, fontSize: '1.125rem', color: '#1f2937' }}>
           {format(selectedDate, 'MMMM yyyy', { locale: fr })}
         </div>
-        <button onClick={goToNextMonth} className="p-2 rounded hover:bg-gray-200">
-          <ArrowRight size={18} />
-        </button>
+        <Button onClick={goToNextMonth}> <ArrowRight size={18} /> </Button>
       </div>
       {/* Calendrier */}
-      <div className="grid grid-cols-7 gap-2 mb-4">
-        {dayNames.map(day => (
-          <div key={day} className="text-center font-medium text-gray-700">
-            {day}
-          </div>
+      <CalendarGridContainer>
+        {dayNames.map((day) => (
+          <div key={day} style={{ textAlign: 'center', fontWeight: 600, color: '#374151' }}>{day}</div>
         ))}
-        {eachDayOfInterval({ start: startOfMonth(selectedDate), end: endOfMonth(selectedDate) }).map((day, idx) => {
-          const isoDay = day.toISOString().split('T')[0];
-          const isSelected = isSameDay(day, selectedDate);
-          return (
-            <button
-              key={idx}
-              onClick={() => onDateChange(day)}
-              className={`py-2 rounded text-center transition-colors ${
-                isSelected ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
-              }`}
-            >
-              {format(day, 'd')}
-            </button>
-          );
-        })}
-      </div>
-      {/* Affichage des créneaux pour la date sélectionnée */}
+        {eachDayOfInterval({ start: startOfMonth(selectedDate), end: endOfMonth(selectedDate) }).map(
+          (day, idx) => {
+            const utcDate = format(toZonedTime(day, 'UTC'), 'yyyy-MM-dd');
+            const isAvailable = availabilities.some(a => a.date === utcDate);
+            return (
+              <DayCell
+                key={idx}
+                selected={isSameDay(day, selectedDate)}
+                available={isAvailable}
+                onClick={() => onDateChange(day)}
+              >
+                {format(day, 'd')}
+              </DayCell>
+            );
+          }
+        )}
+      </CalendarGridContainer>
+      {/* Créneaux */}
       <div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {defaultSlots.map(slot => (
-            <button
-              key={slot}
-              onClick={() => {
-                // Remplacez ceci par votre logique de créneau actuel
-                const currentSlot = { date: selectedDate.toISOString(), startTime: slot, endTime: slot }; // Exemple de définition
-                const start = new Date(`${currentSlot.date}T${currentSlot.startTime}`);
-                const end = new Date(`${currentSlot.date}T${currentSlot.endTime}`);
-                if (start >= end) {
-                  setError("L'heure de fin doit être après l'heure de début.");
-                  return;
-                }
-                onTimeSelect(slot);
-              }}
-              className="p-3 rounded-lg bg-white border hover:border-blue-600 transition-colors min-w-[100px]"
-            >
-              {slot}
-            </button>
-          ))}
-        </div>
+        {defaultSlots.length === 0 ? (
+          <Text>Aucun créneau disponible pour cette date. Veuillez changer de date.</Text>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '1rem' }}>
+            {defaultSlots.map((slot) => {
+              const slotStart = new Date(`${formattedSelectedDate}T${slot}`);
+              const slotEnd = new Date(slotStart.getTime() + serviceDuration * 60000);
+              return (
+                <SlotButton key={slot} onClick={() => onTimeSelect(slot)}>
+                  {slot} - {format(slotEnd, 'HH:mm')}
+                </SlotButton>
+              );
+            })}
+          </div>
+        )}
       </div>
     </motion.div>
   );
 };
 
-/** Étape 3 : Confirmation **/
+/** ConfirmationStep **/
 const ConfirmationStep = ({
   service,
   date,
   time,
-  onConfirm
-}: {
-  service: Service;
-  date: Date;
-  time: string | null;
-  onConfirm: () => void;
-}) => (
-  <motion.div
-    initial={{ opacity: 0, x: 30 }}
-    animate={{ opacity: 1, x: 0 }}
-    exit={{ opacity: 0, x: -30 }}
-    className="text-center"
-  >
-    <CheckCircle className="mx-auto text-blue-600 mb-6" size={48} />
-    <h2 className="text-2xl font-bold mb-4 text-gray-800">Résumé de votre réservation</h2>
-    <div className="max-w-md mx-auto space-y-4 mb-8">
-      <div className="flex justify-between">
-        <span className="text-gray-600">Service :</span>
-        <span className="font-medium text-gray-800">{service.name}</span>
-      </div>
-      <div className="flex justify-between">
-        <span className="text-gray-600">Date :</span>
-        <span>{format(date, 'EEEE d MMMM yyyy', { locale: fr })}</span>
-      </div>
-      <div className="flex justify-between">
-        <span className="text-gray-600">Heure :</span>
-        <span>{time || "-"}</span>
-      </div>
-      <div className="flex justify-between text-lg font-semibold">
-        <span>Total :</span>
-        <span className="text-blue-600 font-medium">{service.price.toLocaleString()} XAF</span>
-      </div>
-    </div>
-    <button
-      onClick={onConfirm}
-      className="w-full max-w-xs mx-auto bg-blue-600 text-white py-4 rounded-xl hover:bg-blue-700 transition-colors"
+  onConfirm,
+  expectedServiceId,
+}: ConfirmationStepProps) => {
+  if (service.id !== expectedServiceId) {
+    return <Text style={{ color: 'red', textAlign: 'center' }}>Incohérence dans la sélection du service</Text>;
+  }
+  const formattedDate = format(date, 'yyyy-MM-dd', { timeZone: 'UTC' });
+  const start = time ? new Date(`${formattedDate}T${time}`) : null;
+  const end = start ? new Date(start.getTime() + service.duration * 60000) : null;
+  return (
+    <Card
+      initial={{ opacity: 0, x: 30 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -30 }}
+      style={{ textAlign: 'center' }}
     >
-      Confirmer et Payer
-    </button>
-  </motion.div>
-);
+      <CheckCircle className="mx-auto" style={{ color: '#3b82f6', marginBottom: '1.5rem' }} size={48} />
+      <Title>Résumé de votre réservation</Title>
+      <Card style={{ padding: '1rem', marginBottom: '1rem' }}>
+        <Title style={{ fontSize: '1.25rem' }}>{service.name}</Title>
+        <Text>{service.description}</Text>
+        <Text>Durée : {service.duration} minutes</Text>
+        <Text>Prix : {service.price.toLocaleString()} XAF</Text>
+      </Card>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+        <Text>Date :</Text>
+        <Text>{format(date, 'EEEE d MMMM yyyy', { locale: fr })}</Text>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+        <Text>Heure de début :</Text>
+        <Text>{time || "-"}</Text>
+      </div>
+      {end && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', fontSize: '1.125rem', fontWeight: 600, color: '#3b82f6' }}>
+          <Text>Heure de fin :</Text>
+          <Text>{format(end, 'HH:mm')}</Text>
+        </div>
+      )}
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.125rem', fontWeight: 600, color: '#3b82f6' }}>
+        <Text>Total :</Text>
+        <Text>{service.price.toLocaleString()} XAF</Text>
+      </div>
+      <Button primary onClick={onConfirm} style={{ marginTop: '1.5rem' }}>
+        Confirmer et ajouter au panier
+      </Button>
+    </Card>
+  );
+};
 
+/** BookingPage **/
 const BookingPage: React.FC = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const expertId = queryParams.get('expertId');
+  const serviceIdFromQuery = queryParams.get('serviceId');
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { addItem } = useBasketStore();
 
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState<number>(1);
   const [services, setServices] = useState<Service[]>([]);
   const [availabilities, setAvailabilities] = useState<Availability[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -253,20 +356,33 @@ const BookingPage: React.FC = () => {
       return;
     }
     const currentMonth = format(new Date(), 'yyyy-MM');
+    const availabilityEndpoint = serviceIdFromQuery
+      ? `/availability/${expertId}?serviceId=${serviceIdFromQuery}`
+      : `/availability/${expertId}?month=${currentMonth}`;
     const fetchData = async () => {
       try {
-        const [servicesRes, availabilityRes] = await Promise.all([
-          api.get(`/services/expert/${expertId}`),
-          api.get(`/availability/${expertId}?month=${currentMonth}`)
-        ]);
-        setServices(servicesRes.data);
-        setAvailabilities(
-          availabilityRes.data.map((a: Availability) => ({
-            ...a,
-            date: new Date(a.date).toISOString()
-          }))
-        );
-      } catch (err) {
+        if (serviceIdFromQuery) {
+          const serviceRes = await api.get(`/services/${serviceIdFromQuery}`);
+          setSelectedService(serviceRes.data);
+          setStep(2);
+        } else {
+          const servicesRes = await api.get(`/services/expert/${expertId}`);
+          setServices(servicesRes.data);
+        }
+        const availabilityRes = await api.get(availabilityEndpoint);
+        const availData: Availability[] = availabilityRes.data;
+        console.log("Disponibilités côté client :", availData);
+        setAvailabilities(availData);
+        if (availData.length > 0) {
+          const todayStr = format(new Date(), 'yyyy-MM-dd', { timeZone: 'UTC' });
+          const futureDates = availData
+            .map(a => a.date)
+            .filter(date => date >= todayStr)
+            .sort();
+          const defaultDate = futureDates.length > 0 ? futureDates[0] : availData[0].date;
+          setSelectedDate(new Date(`${defaultDate}T00:00:00Z`));
+        }
+      } catch (err: any) {
         setError('Erreur de connexion au serveur - Code 500');
         console.error('Détails:', err.response?.data);
       } finally {
@@ -274,22 +390,33 @@ const BookingPage: React.FC = () => {
       }
     };
     fetchData();
-  }, [expertId, user]);
+  }, [expertId, user, serviceIdFromQuery]);
 
-  const handleBooking = async () => {
-    if (!user) return navigate('/login');
-    try {
-      await axios.post('/appointments', {
-        serviceId: selectedService?.id,
-        expertId,
-        startTime: selectedTime,
-        endTime: selectedTime // Adaptation possible selon la logique métier
-      });
-      navigate('/booking-confirmation');
-    } catch (err) {
-      setError('Erreur lors de la réservation');
-      console.error('Erreur réservation:', err);
+  useEffect(() => {
+    if (availabilities.length > 0) {
+      const availableDates = availabilities.map(a => a.date);
+      const current = format(selectedDate, 'yyyy-MM-dd', { timeZone: 'UTC' });
+      if (!availableDates.includes(current)) {
+        setSelectedDate(new Date(`${availableDates[0]}T00:00:00Z`));
+      }
     }
+  }, [availabilities, selectedDate]);
+
+  const addToBasket = () => {
+    if (!selectedService) {
+      setError("Veuillez sélectionner un service.");
+      return;
+    }
+    if (!selectedTime) {
+      setError("Veuillez sélectionner une heure.");
+      return;
+    }
+    addItem({
+      service: selectedService,
+      date: format(selectedDate, 'yyyy-MM-dd'),
+      time: selectedTime,
+    });
+    navigate('/basket');
   };
 
   const goToNextStep = () => {
@@ -302,34 +429,30 @@ const BookingPage: React.FC = () => {
       return;
     }
     setError(null);
-    setStep(prev => prev + 1);
+    setStep((prev) => prev + 1);
   };
 
-  const goToPreviousStep = () => setStep(prev => prev - 1);
+  const goToPreviousStep = () => setStep((prev) => prev - 1);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <Container style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Loader className="animate-spin" size={48} />
-      </div>
+      </Container>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-red-500">
+      <Container style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'red' }}>
         {error}
-      </div>
+      </Container>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 bg-gray-50 min-h-screen">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl shadow-lg p-8"
-      >
+    <Container>
+      <Card initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <ProgressIndicator step={step} />
         <AnimatePresence mode="wait">
           {step === 1 && (
@@ -339,21 +462,31 @@ const BookingPage: React.FC = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -30 }}
             >
-              <ServiceSelection
-                services={services}
-                onSelect={(service) => {
-                  setSelectedService(service);
-                  setStep(2);
-                }}
-              />
-              <div className="flex justify-end mt-4">
-                <button
-                  onClick={goToNextStep}
-                  className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
-                >
-                  <span>Next</span>
-                  <ArrowRight size={18} />
-                </button>
+              {serviceIdFromQuery && selectedService ? (
+                <div style={{ marginBottom: '1rem' }}>
+                  <Title>{selectedService.name}</Title>
+                  <Text>{selectedService.description}</Text>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#6b7280', marginTop: '0.5rem' }}>
+                    <span>Durée : {selectedService.duration} minutes</span>
+                    <span style={{ color: '#3b82f6' }}>{selectedService.price.toLocaleString()} XAF</span>
+                  </div>
+                  {selectedService.videoPlatform && (
+                    <Text style={{ marginTop: '0.5rem' }}>Plateforme : {selectedService.videoPlatform}</Text>
+                  )}
+                </div>
+              ) : (
+                <ServiceSelection
+                  services={services}
+                  onSelect={(service) => {
+                    setSelectedService(service);
+                    setStep(2);
+                  }}
+                />
+              )}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+                <Button primary onClick={goToNextStep}>
+                  Next <ArrowRight size={18} />
+                </Button>
               </div>
             </motion.div>
           )}
@@ -369,23 +502,14 @@ const BookingPage: React.FC = () => {
                 selectedDate={selectedDate}
                 onDateChange={setSelectedDate}
                 onTimeSelect={(time) => setSelectedTime(time)}
+                setError={setError}
+                serviceDuration={selectedService ? selectedService.duration : 0}
               />
-              <div className="flex justify-between mt-4">
-                <button
-                  onClick={goToPreviousStep}
-                  className="flex items-center space-x-2 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg transition-colors"
-                >
-                  <ArrowLeft size={18} />
-                  <span>Back</span>
-                </button>
-                <button
-                  onClick={goToNextStep}
-                  className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
-                  disabled={!selectedTime}
-                >
-                  <span>Next</span>
-                  <ArrowRight size={18} />
-                </button>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem' }}>
+                <Button onClick={goToPreviousStep}> <ArrowLeft size={18} /> Back</Button>
+                <Button primary onClick={goToNextStep} disabled={!selectedTime}>
+                  Next <ArrowRight size={18} />
+                </Button>
               </div>
             </motion.div>
           )}
@@ -400,22 +524,19 @@ const BookingPage: React.FC = () => {
                 service={selectedService}
                 date={selectedDate}
                 time={selectedTime}
-                onConfirm={handleBooking}
+                onConfirm={addToBasket}
+                expectedServiceId={Number(serviceIdFromQuery)}
               />
-              <div className="flex justify-start mt-4">
-                <button
-                  onClick={goToPreviousStep}
-                  className="flex items-center space-x-2 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg transition-colors"
-                >
-                  <ArrowLeft size={18} />
-                  <span>Back</span>
-                </button>
+              <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '1rem' }}>
+                <Button className="secondary" onClick={goToPreviousStep}>
+                  <ArrowLeft size={18} /> Back
+                </Button>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.div>
-    </div>
+      </Card>
+    </Container>
   );
 };
 

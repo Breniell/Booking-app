@@ -19,7 +19,9 @@ import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import Chart from 'chart.js/auto';
+import Chart, { ChartConfiguration } from 'chart.js/auto';
+import styled from 'styled-components';
+import { FaSignOutAlt } from 'react-icons/fa';
 
 // Interfaces
 interface Appointment {
@@ -27,7 +29,8 @@ interface Appointment {
   startTime: string;
   endTime: string;
   status: 'scheduled' | 'completed' | 'cancelled';
-  Service: { name: string };
+  // Accès au service via l’alias "service"
+  service?: { name?: string; price?: string };
   Client?: { firstName: string; lastName: string };
   Expert?: { firstName: string; lastName: string };
 }
@@ -37,7 +40,6 @@ interface Service {
   name: string;
   description: string;
   price: number;
-  // Autres champs si nécessaire
 }
 
 interface SummaryCardProps {
@@ -53,10 +55,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ title, value, icon, bgColor, 
     className="p-5 rounded-lg shadow-md flex items-center transition-transform hover:scale-105"
     style={{ backgroundColor: bgColor }}
   >
-    <div
-      className="mr-4 p-3 rounded-full bg-white bg-opacity-30"
-      style={{ color: textColor }}
-    >
+    <div className="mr-4 p-3 rounded-full bg-white bg-opacity-30" style={{ color: textColor }}>
       {icon}
     </div>
     <div>
@@ -99,8 +98,24 @@ const StatisticCard: React.FC<StatisticCardProps> = ({ title, value, icon, color
   );
 };
 
+// Bouton avec props transitoires pour éviter de passer la prop au DOM
+const Button = styled.button<{ $primary?: boolean }>`
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  cursor: pointer;
+  border: none;
+  background-color: ${({ $primary }) => ($primary ? "#3b82f6" : "#e5e7eb")};
+  color: ${({ $primary }) => ($primary ? "#ffffff" : "#374151")};
+  &:hover {
+    background-color: ${({ $primary }) => ($primary ? "#2563eb" : "#d1d5db")};
+    ${({ $primary }) => $primary && "transform: scale(1.02);"}
+  }
+`;
+
 const Dashboard: React.FC = () => {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,14 +125,19 @@ const Dashboard: React.FC = () => {
   const [totalClients, setTotalClients] = useState(0);
   const navigate = useNavigate();
 
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+
   useEffect(() => {
     if (!user) return;
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
         setError(null);
-        const baseUrl = user.role === 'client' ? `/clients/${user.id}` : `/experts/${user.id}`;
-        
         // Récupération des rendez-vous
         const appointmentsResponse = await api.get(
           user.role === 'client'
@@ -127,16 +147,23 @@ const Dashboard: React.FC = () => {
         setAppointments(appointmentsResponse.data);
         
         if (user.role === 'expert') {
-          const revenueResponse = await api.get(`/experts/${user.id}/revenue`);
+          // Récupérer le profil expert via /api/experts/:userId
+          const expertRes = await api.get(`/experts/${user.id}`);
+          const expert = expertRes.data;
+          // Récupération des statistiques via /api/expert-stats
+          const revenueResponse = await api.get(`/expert-stats/${expert.id}/revenue`);
           setTotalRevenue(revenueResponse.data.totalRevenue || 0);
           
-          const clientsResponse = await api.get(`/experts/${user.id}/clients`);
+          const clientsResponse = await api.get(`/expert-stats/${expert.id}/clients`);
           setTotalClients(clientsResponse.data.totalClients || 0);
           
-          const servicesResponse = await api.get(`/services/expert/${user.id}`);
+          // Récupération des services
+          const servicesResponse = await api.get(`/services/expert/${expert.id}`);
+          console.log("Services Dashboard :", servicesResponse.data);
           setServices(servicesResponse.data);
           
-          setAverageRating(0); // Ajustez selon vos données réelles
+          // Note : Vous pouvez ajuster l'averageRating en fonction de vos données réelles
+          setAverageRating(0);
         }
       } catch (err: any) {
         setError(err.response?.data?.message || 'Erreur de chargement des données');
@@ -152,7 +179,9 @@ const Dashboard: React.FC = () => {
       const bookingDates = appointments.map(app =>
         format(parseISO(app.startTime), 'dd MMM', { locale: fr })
       );
-      const bookingRevenues = appointments.map(app => 10); // À remplacer par la valeur réelle
+      const bookingRevenues = appointments.map(app =>
+        app.service && app.service.price ? parseFloat(app.service.price) : 0
+      );
       const chartData = {
         labels: bookingDates,
         datasets: [{
@@ -163,7 +192,7 @@ const Dashboard: React.FC = () => {
           borderWidth: 1
         }]
       };
-      const chartConfig = {
+      const chartConfig: ChartConfiguration<'line', number[], string> = {
         type: 'line',
         data: chartData,
         options: {
@@ -200,6 +229,18 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#f3f4f6" }}>
+      <div className="container mx-auto px-4 py-6 flex justify-end">
+        <motion.button
+          onClick={handleLogout}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md transition-colors"
+        >
+          <FaSignOutAlt size={18} />
+          <span>Déconnexion</span>
+        </motion.button>
+      </div>
+
       <div className="container mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-4 gap-8">
         {/* Sidebar */}
         <aside className="md:col-span-1 space-y-8">
@@ -284,7 +325,7 @@ const Dashboard: React.FC = () => {
               <div>
                 <h1 className="text-3xl font-bold" style={{ color: "#1f2937" }}>Mes Rendez-vous</h1>
                 <p className="mt-2" style={{ color: "#4b5563" }}>
-                  {user?.role === 'expert'
+                  {user.role === 'expert'
                     ? `${completed}/${totalAppointments} RDV terminés`
                     : `${upcoming} RDV à venir`}
                 </p>
@@ -296,7 +337,7 @@ const Dashboard: React.FC = () => {
                 <div>
                   <p className="text-sm" style={{ color: "#4b5563" }}>Statut actuel</p>
                   <p className="text-xl font-bold" style={{ color: "#1f2937" }}>
-                    {user?.role === 'expert'
+                    {user.role === 'expert'
                       ? `${totalClients} clients`
                       : `${totalAppointments} RDV`}
                   </p>
@@ -304,7 +345,7 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           </div>
-          {user?.role === 'expert' && (
+          {user.role === 'expert' && (
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <StatisticCard
@@ -377,7 +418,9 @@ const Dashboard: React.FC = () => {
                   style={{ backgroundColor: "#ffffff" }}
                 >
                   <div className="flex-1">
-                    <h2 className="text-xl font-semibold" style={{ color: "#1f2937" }}>{app.Service.name}</h2>
+                    <h2 className="text-xl font-semibold" style={{ color: "#1f2937" }}>
+                      {app.service?.name || "Service non défini"}
+                    </h2>
                     <p style={{ color: "#4b5563" }}>
                       {format(parseISO(app.startTime), 'EEEE d MMMM yyyy à HH:mm', { locale: fr })} - {format(parseISO(app.endTime), 'HH:mm', { locale: fr })}
                     </p>
@@ -438,7 +481,7 @@ const Dashboard: React.FC = () => {
                   >
                     <div>
                       <p className="text-lg font-semibold" style={{ color: "#1f2937" }}>
-                        {app.Service.name}
+                        {app.service?.name || "Service non défini"}
                       </p>
                       <p className="text-sm" style={{ color: "#4b5563" }}>
                         {format(parseISO(app.startTime), 'dd MMM yyyy, HH:mm', { locale: fr })}
