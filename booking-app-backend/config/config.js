@@ -15,19 +15,14 @@ module.exports = {
     logging: false
   },
   production: {
-    username: process.env.DB_USERNAME,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT || 5432,
-    dialect: "postgres",
-    protocol: 'postgres',
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false
-    }
-  },
+    use_env_variable: "DB_URL",        // <— ajoutez ceci
+    dialect:          "postgres",
+    dialectOptions: {
+      ssl: {
+        require:          true,
+        rejectUnauthorized: false   // pour Supabase :contentReference[oaicite:0]{index=0}
+      }
+    },
     logging: false
   }
 };
