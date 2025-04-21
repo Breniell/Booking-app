@@ -1,34 +1,35 @@
 // models/index.js
 const { Sequelize } = require('sequelize');
-const config = require('../config/config.js');
-require('dotenv').config();
+const config       = require('../config/config.js');
+const env          = process.env.NODE_ENV || 'development';
+const dbConfig     = config[env];
 
-const env = process.env.NODE_ENV || 'development';
-const dbConfig = config[env];
 let sequelize;
 if (dbConfig.use_env_variable) {
-  // usage de l’URI complète
-  sequelize = new Sequelize(process.env[dbConfig.use_env_variable], dbConfig);
+  // En production : lisez l'URI complète depuis process.env.DATABASE_URL
+  sequelize = new Sequelize(process.env[dbConfig.use_env_variable], {
+    dialect:          dbConfig.dialect,
+    dialectOptions:   dbConfig.dialectOptions,
+    pool:             dbConfig.pool,
+    logging:          dbConfig.logging
+  });
 } else {
-  // mode développement
+  // En dev : connexion MySQL classique
   sequelize = new Sequelize(
     dbConfig.database,
     dbConfig.username,
     dbConfig.password,
-    {host: dbConfig.host,
-    dialect: dbConfig.dialect,
-    logging: false,},
-    dbConfig
+    {
+      host:            dbConfig.host,
+      port:            dbConfig.port,
+      dialect:         dbConfig.dialect,
+      logging:         dbConfig.logging,
+      pool:            dbConfig.pool
+    }
   );
 }
 
-const sequelize = new Sequelize(dbConfig.database, dbConfig.username, dbConfig.password, {
-  host: dbConfig.host,
-  dialect: dbConfig.dialect,
-  logging: false
-});
-
-const db = {};
+const db = { Sequelize, sequelize };
 
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
