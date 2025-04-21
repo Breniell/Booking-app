@@ -21,20 +21,27 @@ const ServiceCard = styled(motion.div)`
 const CardImage = styled.img`width:100%; border-radius:0.5rem; margin-bottom:1rem;`;
  
 
-const popular = [  
-  { title: 'Website Development', imgSrc: '/assets/website-development.png' },  
-  { title: 'Logo Design', imgSrc: '/assets/logo-design.png' },  
-  { title: 'SEO', imgSrc: '/assets/seo.png' },  
-  { title: 'Video Editing', imgSrc: '/assets/video-editing.png' },  
-  { title: 'Voice Over', imgSrc: '/assets/voice-over.png' },  
-  { title: 'Social Media Marketing', imgSrc: '/assets/social-media-marketing.png' },  
-  { title: 'E-Commerce Marketing', imgSrc: '/assets/e-commerce-marketing.png' },  
-  { title: 'Data Science', imgSrc: '/assets/data-science.png' },  
-];  
+// src/components/PopularServices.tsx
+const popular = [
+  { title: 'Cours de langues',             imgSrc: '/assets/online-language.jpeg' },
+  { title: 'Coaching sportif',             imgSrc: '/assets/online-fitness.jpeg' },
+  { title: 'Marketing digital',            imgSrc: '/assets/online-marketing.jpeg' },
+  { title: 'Mentorat dev web',             imgSrc: '/assets/online-dev.jpeg' },
+  { title: 'Design graphique',             imgSrc: '/assets/online-design.jpeg' },
+  { title: 'Coaching carrière',            imgSrc: '/assets/online-career.jpeg' },
+  { title: 'Conseil financier',            imgSrc: '/assets/online-finance.jpeg' },
+  { title: 'Consultation juridique',       imgSrc: '/assets/online-legal.jpeg' },
+  { title: 'Thérapie & bien‑être',         imgSrc: '/assets/online-therapy.jpeg' },
+  { title: 'Audit SEO',                    imgSrc: '/assets/online-seo.jpeg' },
+];
+ 
 
 export default function PopularServices({ isDarkMode }: { isDarkMode: boolean }) {
   return (
-    <Section isDarkMode={isDarkMode}>
+    <Section isDarkMode={isDarkMode}
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    transition={{ delay: 0.7 }}>
       <Container>
         <Title isDarkMode={isDarkMode}>Popular Services</Title>
         <Grid
