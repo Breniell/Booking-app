@@ -2,7 +2,11 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api' ,
+  baseURL: 'https://booking-app-production.up.railway.app/api',
+  
+  
+  
+  // 'http://localhost:5000/api'
   
 
   // 'https://booking-app-backend-2tla.onrender.com/api'
