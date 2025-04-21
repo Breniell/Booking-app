@@ -2,11 +2,10 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://booking-app-backend-2tla.onrender.com/api' ,
+  baseURL: 'http://localhost:5000/api' ,
   
 
-  
-  // 'http://localhost:5000/api' 
+  // 'https://booking-app-backend-2tla.onrender.com/api'
   // Vous pouvez activer d'autres options ici si besoin
 });
 

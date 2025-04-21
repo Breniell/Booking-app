@@ -4,6 +4,11 @@ import { Link } from 'react-router-dom';
 import Hero from '../components/Hero.tsx';
 import TestimonialsCarousel, { Testimonial } from '../components/TestimonialsCarousel.tsx';
 import api from '../lib/api.ts';
+import Categories from '../components/Categories.tsx';
+import PopularServices from '../components/PopularServices.tsx';
+import TrustedBy from '../components/TrustedBy.tsx';
+import { fadeInUp, staggerContainer } from '../lib/motionVariants.ts';
+
 
 interface Service {
   id: string;
@@ -13,6 +18,7 @@ interface Service {
   price: number;
   imageUrl: string;
 }
+const isDarkMode = false;
 
 const HomePage: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
@@ -67,10 +73,41 @@ const HomePage: React.FC = () => {
   ];
 
   return (
+    
     <div className="flex flex-col min-h-screen w-full bg-gray-100 dark:bg-gray-900 scroll-smooth">
       {/* HERO SECTION */}
       <Hero />
 
+{/* Catégories */}
+<motion.div
+        variants={staggerContainer}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+      >
+        <Categories isDarkMode={isDarkMode} />
+      </motion.div>
+
+      {/* Trusted By */}
+      <motion.div
+        variants={staggerContainer}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+      >
+        <TrustedBy />
+      </motion.div>
+
+      {/* Popular */}
+      <motion.div
+        variants={staggerContainer}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+      >
+        <PopularServices isDarkMode={isDarkMode} />
+      </motion.div>
+      
       {/* SECTION À PROPOS */}
       <motion.section
         className="py-20 bg-white dark:bg-gray-800 w-full"
