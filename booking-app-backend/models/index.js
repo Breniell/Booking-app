@@ -5,6 +5,22 @@ require('dotenv').config();
 
 const env = process.env.NODE_ENV || 'development';
 const dbConfig = config[env];
+let sequelize;
+if (dbConfig.use_env_variable) {
+  // usage de l’URI complète
+  sequelize = new Sequelize(process.env[dbConfig.use_env_variable], dbConfig);
+} else {
+  // mode développement
+  sequelize = new Sequelize(
+    dbConfig.database,
+    dbConfig.username,
+    dbConfig.password,
+    {host: dbConfig.host,
+    dialect: dbConfig.dialect,
+    logging: false,},
+    dbConfig
+  );
+}
 
 const sequelize = new Sequelize(dbConfig.database, dbConfig.username, dbConfig.password, {
   host: dbConfig.host,

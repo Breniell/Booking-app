@@ -1,7 +1,9 @@
 // config/config.js
 // require('./validateEnv'); // Vérifie que toutes les variables essentielles sont présentes
 require('dotenv').config({
-  path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development'
+  path: process.env.NODE_ENV === 'production'
+    ? '.env.production'
+    : '.env.development'
 });
 
 module.exports = {
@@ -15,15 +17,21 @@ module.exports = {
     logging: false
   },
   production: {
-    use_env_variable: "DATABASE_URL",        // <— ajoutez ceci
-    dialect:          "postgres",
+    use_env_variable: "DATABASE_URL",       // ← indique à Sequelize d’utiliser cette URI
+    dialect: "postgres",
+    protocol: "postgres",
     dialectOptions: {
       ssl: {
-        require:          true,
-        rejectUnauthorized: false   // pour Supabase :contentReference[oaicite:0]{index=0}
-      },
-      prepare: false
+        require: true,
+        rejectUnauthorized: false           // SSL pour Supabase
+      }
     },
-    logging: false
+    logging: false,
+    pool: {
+      max: 15,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    }
   }
 };
