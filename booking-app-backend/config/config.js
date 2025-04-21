@@ -21,7 +21,8 @@ module.exports = {
       ssl: {
         require:          true,
         rejectUnauthorized: false   // pour Supabase :contentReference[oaicite:0]{index=0}
-      }
+      },
+      prepare: false
     },
     logging: false
   }
